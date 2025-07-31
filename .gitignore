@@ -1,0 +1,29 @@
+# macOS metadata
+.DS_Store
+
+# Xcode
+*.xcscmblueprint
+*.xccheckout
+*.xcuserstate
+*.xcworkspace/contents.xcworkspacedata
+*.xcschememanagement.plist
+*.xcuserdatad/
+*.xcworkspace/xcuserdata/
+*.xcuserdata/
+
+# Build artifacts
+DerivedData/
+build/
+
+# SwiftPM
+.build/
+.packages/
+
+# IDE/editor settings
+*.idea/
+*.vscode/
+*.swp
+*.swo
+
+# Ignore Xcode workspace user settings
+FFTestEditor.xcodeproj/project.xcworkspace/
