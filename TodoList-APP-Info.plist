@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Required info -->
+    <key>CFBundleName</key>
+    <string>TodoList_APP</string>
+    <key>CFBundleIdentifier</key>
+    <string>evanroot.TodoList-APP</string> <!-- use your actual bundle ID -->
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+
+
+    <!-- Spotify Keys -->
+    <key>SPOTIFY_CLIENT_ID</key>
+    <string>$(SPOTIFY_CLIENT_ID)</string>
+    <key>SPOTIFY_REDIRECT_URI</key>
+    <string>$(SPOTIFY_REDIRECT_URI)</string>
+
+    
+    <!-- URL Schemes -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>CFBundleURLName</key>
+            <string>MyAppURL</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>myapp</string>
+            </array>
+        </dict>
+    </array>
+    
+    <!-- Any other keys your app needs -->
+</dict>
+</plist>
+

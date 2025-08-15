@@ -8,6 +8,7 @@
 
 /* Begin PBXFileReference section */
 		FA4DBC1C2E3B039300F5EAE9 /* TodoList_APP.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TodoList_APP.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FA4DBC732E499CE800F5EAE9 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -34,6 +35,7 @@
 			children = (
 				FA4DBC1E2E3B039300F5EAE9 /* TodoList_APP */,
 				FA4DBC1D2E3B039300F5EAE9 /* Products */,
+				FA4DBC732E499CE800F5EAE9 /* Secrets.xcconfig */,
 			);
 			sourceTree = "<group>";
 		};
@@ -127,6 +129,7 @@
 /* Begin XCBuildConfiguration section */
 		FA4DBC262E3B039500F5EAE9 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = FA4DBC732E499CE800F5EAE9 /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -178,6 +181,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				"INFOPLIST_FILE[sdk=*]" = "";
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -191,6 +195,7 @@
 		};
 		FA4DBC272E3B039500F5EAE9 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = FA4DBC732E499CE800F5EAE9 /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -247,10 +252,12 @@
 		};
 		FA4DBC292E3B039500F5EAE9 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = FA4DBC732E499CE800F5EAE9 /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = TodoList_APP/TodoList_APP.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -258,6 +265,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "TodoList-APP-Info.plist";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -267,6 +275,9 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "evanroot.TodoList-APP";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
+				SPOTIFY_CLIENT_ID = "$(SPOTIFY_CLIENT_ID)";
+				SPOTIFY_CLIENT_SECRET = "$(SPOTIFY_CLIENT_SECRET)";
+				SPOTIFY_REDIRECT_URI = "$(SPOTIFY_REDIRECT_URI)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -274,10 +285,12 @@
 		};
 		FA4DBC2A2E3B039500F5EAE9 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = FA4DBC732E499CE800F5EAE9 /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = TodoList_APP/TodoList_APP.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -285,6 +298,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "TodoList-APP-Info.plist";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -294,6 +308,9 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "evanroot.TodoList-APP";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
+				SPOTIFY_CLIENT_ID = "$(SPOTIFY_CLIENT_ID)";
+				SPOTIFY_CLIENT_SECRET = "$(SPOTIFY_CLIENT_SECRET)";
+				SPOTIFY_REDIRECT_URI = "$(SPOTIFY_REDIRECT_URI)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};

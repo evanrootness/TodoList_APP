@@ -27,3 +27,6 @@ build/
 
 # Ignore Xcode workspace user settings
 FFTestEditor.xcodeproj/project.xcworkspace/
+
+
+Secrets.xcconfig
