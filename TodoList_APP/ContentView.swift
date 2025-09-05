@@ -11,10 +11,12 @@ struct ContentView: View {
     @State private var selectedTab: SidebarTab = .report
     @EnvironmentObject var routineVM: RoutineViewModel
     @EnvironmentObject var spotifyAuth: SpotifyAuthManager
-    
+    @EnvironmentObject var weatherDBHelper: WeatherDatabaseHelper
+    @EnvironmentObject var weatherVM: WeatherViewModel
+    @EnvironmentObject var inputVM: DailyInputViewModel
+    @EnvironmentObject var inputDH: DailyInputDatabaseHelper
     
     var body: some View {
-//        Text("Hello, World!")
         ZStack {
             // Main App UI
             HStack(spacing: 0) {
@@ -31,25 +33,38 @@ struct ContentView: View {
                     Button("Login with Spotify") {
                         spotifyAuth.startAuthorization()
                     }
-                    .padding()
-                    .background(Color.green)
-                    .cornerRadius(8)
                 }
                 .frame(width: 300, height: 150)
                 .background(Color.gray.opacity(0.9))
                 .cornerRadius(12)
                 .shadow(radius: 10)
             }
+            
+            if weatherVM.showSetupWindow {
+                SetupView(weatherVM: weatherVM)
+                    .background(Color.white)
+                    .cornerRadius(12)
+                    .shadow(radius: 10)
+            }
+        }
+        .task {
+            if !inputVM.dailyInputComplete {
+                selectedTab = .input
+            }
+        }
+        .onChange(of: inputVM.dailyInputComplete) {
+//            print("onChange triggered. Value: \(inputVM.dailyInputComplete)")
+            selectedTab = inputVM.dailyInputComplete ? .report : .input
         }
     }
 }
 
-//struct ContentView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        ContentView()
-//            .environmentObject(RoutineViewModel())
-//            .environmentObject(SpotifyAuthManager())
-//        
-//    }
-//}
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
+            .environmentObject(RoutineViewModel())
+            .environmentObject(SpotifyAuthManager.shared)
+        
+    }
+}
 

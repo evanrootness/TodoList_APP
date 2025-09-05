@@ -11,6 +11,9 @@ import Foundation
 
 struct RoutinesView: View {
     @EnvironmentObject var routineVM: RoutineViewModel
+    @State private var isEditing = false
+    
+    private var rowHeight: CGFloat = 35
     
     var body: some View {
         VStack {
@@ -35,6 +38,13 @@ struct RoutinesView: View {
                 }
                 .buttonStyle(BorderlessButtonStyle())
                 
+                
+                Spacer()
+                Button(isEditing ? "Done" : "Edit") {
+                    isEditing.toggle()
+                }
+                
+                
             }
             Spacer()
             
@@ -47,19 +57,45 @@ struct RoutinesView: View {
                             .strikethrough(routine.isCompleted)
                         Spacer()
                         Text(routine.dateCreated.formatted(date: .abbreviated, time: .shortened))
-                            
+                        
+                        if isEditing {
+                            Button(action: {
+                                if let index = routineVM.routines.firstIndex(where: { $0.id == routine.id }) {
+                                    routineVM.routines.remove(at: index)
+                                }
+                            }) {
+//                                Image(systemName: "trash")
+//                                    .foregroundColor(.red)
+                                Text("Delete")
+                                    .frame(maxWidth: 80)
+                                    .frame(height: rowHeight)
+                                    .background(Color.red)
+                                    .foregroundColor(Color.white)
+                            }
+                            .buttonStyle(BorderlessButtonStyle()) // Prevent row selection
+                            .listRowInsets(EdgeInsets()) // removes row padding
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.red)
+                        }
+                        
                     }
+                    .frame(height: rowHeight)
+                    .contentShape(Rectangle())
+                    .listRowInsets(EdgeInsets())
+                    .listRowSeparator(.hidden)
                     .onTapGesture {
-                        routineVM.toggleCompletion(of: routine)
+                        if !isEditing {
+                            routineVM.toggleCompletion(of: routine)
+                        }
                     }
+                
                 }
                 .onDelete(perform: routineVM.delete)
             }
+            .listStyle(PlainListStyle())
             .navigationTitle("My Routines")
-            
         }
         .padding()
-
     }
 }
 

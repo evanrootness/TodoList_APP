@@ -55,9 +55,9 @@ class SpotifyAuthManager: ObservableObject {
         
         // Load refresh token (optional)
         if let refreshData = KeychainHelper.shared.read(service: "Spotify", account: "refreshToken"),
-           let refresh = String(data: refreshData, encoding: .utf8) {
+           let refresh = String(data: refreshData, encoding: .utf8), !refresh.isEmpty {
             // You can refresh the access token here if needed
-            refreshAccessToken(using: refresh)
+            self.refreshToken = refresh
         }
     }
     
@@ -70,18 +70,23 @@ class SpotifyAuthManager: ObservableObject {
     //    private let redirectURI = Bundle.main.object(forInfoDictionaryKey: "SPOTIFY_REDIRECT_URI") as! String
     private let redirectURI: String = {
         let raw = Bundle.main.object(forInfoDictionaryKey: "SPOTIFY_REDIRECT_URI") as! String
+//        print(raw.removingPercentEncoding ?? raw)
         return raw.removingPercentEncoding ?? raw
     }()
+    
     private let scopes = "user-read-recently-played"
     
     private var codeVerifier: String = ""
     
     @Published var accessToken: String?
+    private var accessTokenExpirationDate: Date?
+    @Published var refreshToken: String?
     @Published var recentlyPlayed: [RecentlyPlayedResponse.Item] = []
     
     private var cancellables = Set<AnyCancellable>()
     
     func startAuthorization() {
+//        print("starting auth with redirectURI = ", redirectURI)
         codeVerifier = generateCodeVerifier()
         let codeChallenge = generateCodeChallenge(codeVerifier)
         
@@ -95,15 +100,18 @@ class SpotifyAuthManager: ObservableObject {
     }
     
     func handleRedirectURL(_ url: URL) {
+//        print("handleRedirectURL CALLED with:", url.absoluteString)
         guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
               let code = components.queryItems?.first(where: { $0.name == "code" })?.value else {
             print("No code found in URL")
             return
         }
+//        print("Got code:", code)
         exchangeCodeForToken(code: code)
     }
     
     private func exchangeCodeForToken(code: String) {
+//        print("Exchanging code with redirectURI =", redirectURI)
         let tokenURL = URL(string: "https://accounts.spotify.com/api/token")!
         var request = URLRequest(url: tokenURL)
         request.httpMethod = "POST"
@@ -137,20 +145,63 @@ class SpotifyAuthManager: ObservableObject {
                     print("Token exchange failed: \(error)")
                 }
             }, receiveValue: { [weak self] tokenResponse in
-                self?.accessToken = tokenResponse.access_token
                 
-                // Save to Keychain
+                guard let self = self else { return }
+
+                // Save access token
+                self.accessToken = tokenResponse.access_token
+                self.accessTokenExpirationDate = Date().addingTimeInterval(TimeInterval(tokenResponse.expires_in))
                 if let accessData = tokenResponse.access_token.data(using: .utf8) {
                     KeychainHelper.shared.save(accessData, service: "Spotify", account: "accessToken")
                 }
-                if let refresh = tokenResponse.refresh_token,
-                   let refreshData = refresh.data(using: .utf8) {
-                    KeychainHelper.shared.save(refreshData, service: "Spotify", account: "refreshToken")
+
+                // Save refresh token only if Spotify returns a new one
+                if let newRefresh = tokenResponse.refresh_token, !newRefresh.isEmpty {
+                    self.refreshToken = newRefresh
+                    if let refreshData = newRefresh.data(using: .utf8) {
+                        KeychainHelper.shared.save(refreshData, service: "Spotify", account: "refreshToken")
+                    }
+                    print("Received new refresh token, saved to Keychain.")
+                } else {
+                    print("No new refresh token returned. Keeping existing refresh token.")
                 }
-                
-                self?.fetchRecentlyPlayed()
+
+                // Fetch data now that we have a valid access token
+                self.fetchRecentlyPlayedSafe()
             })
             .store(in: &cancellables)
+    }
+    
+    func ensureValidAccessToken(completion: @escaping (Bool) -> Void) {
+        // If access token exists and is still valid, do nothing
+        if let token = accessToken, !isTokenExpired() {
+            completion(true)
+            return
+        }
+
+        // Otherwise, try to refresh
+        guard let refresh = refreshToken else {
+            // No refresh token, user needs to log in
+            completion(false)
+            return
+        }
+        refreshAccessToken(using: refresh) { ok in
+            completion(ok)
+        }
+        
+    }
+
+    
+    
+    func fetchRecentlyPlayedSafe() {
+        ensureValidAccessToken { [weak self] ok in
+            guard let self = self else { return }
+            if ok {
+                self.fetchRecentlyPlayed()
+            } else {
+                self.startAuthorization()
+            }
+        }
     }
     
     func fetchRecentlyPlayed() {
@@ -206,31 +257,27 @@ class SpotifyAuthManager: ObservableObject {
     
     
     func logout() {
+        cancellables.removeAll()
         KeychainHelper.shared.delete(service: "Spotify", account: "accessToken")
         KeychainHelper.shared.delete(service: "Spotify", account: "refreshToken")
         self.accessToken = nil
+        self.refreshToken = nil
+        self.accessTokenExpirationDate = nil
     }
     
     
     // If already saved Spotify credentials, use refresh token
-    private func refreshAccessToken(using refreshToken: String) {
+    private func refreshAccessToken(using refreshToken: String, completion: @escaping (Bool) -> Void) {
         let tokenURL = URL(string: "https://accounts.spotify.com/api/token")!
         var request = URLRequest(url: tokenURL)
         request.httpMethod = "POST"
-        
-        let params = [
+        request.httpBody = [
             "client_id": clientID,
             "grant_type": "refresh_token",
             "refresh_token": refreshToken
-        ]
-        
-        request.httpBody = params
-            .map { "\($0.key)=\($0.value)" }
-            .joined(separator: "&")
-            .data(using: .utf8)
-        
+        ].map { "\($0.key)=\($0.value)" }.joined(separator: "&").data(using: .utf8)
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-        
+
         URLSession.shared.dataTaskPublisher(for: request)
             .tryMap { data, response -> Data in
                 guard let httpResp = response as? HTTPURLResponse, httpResp.statusCode == 200 else {
@@ -240,31 +287,37 @@ class SpotifyAuthManager: ObservableObject {
             }
             .decode(type: SpotifyTokenResponse.self, decoder: JSONDecoder())
             .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: { completion in
-                if case let .failure(error) = completion {
+            .sink(receiveCompletion: { completionState in
+                if case .failure(let error) = completionState {
                     print("Token refresh failed: \(error)")
+                    completion(false)
                 }
             }, receiveValue: { [weak self] tokenResponse in
-                self?.accessToken = tokenResponse.access_token
-                
-                // Save updated access token
-                if let accessData = tokenResponse.access_token.data(using: .utf8) {
-                    KeychainHelper.shared.save(accessData, service: "Spotify", account: "accessToken")
+                guard let self = self else { return }
+                self.accessToken = tokenResponse.access_token
+                self.accessTokenExpirationDate = Date().addingTimeInterval(TimeInterval(tokenResponse.expires_in))
+
+                if let data = tokenResponse.access_token.data(using: .utf8) {
+                    KeychainHelper.shared.save(data, service: "Spotify", account: "accessToken")
                 }
-                
-                // If Spotify returns a new refresh token, store it
-                if let newRefresh = tokenResponse.refresh_token,
-                   let refreshData = newRefresh.data(using: .utf8) {
-                    KeychainHelper.shared.save(refreshData, service: "Spotify", account: "refreshToken")
+                if let newRefresh = tokenResponse.refresh_token, !newRefresh.isEmpty,
+                   let rdata = newRefresh.data(using: .utf8) {
+                    KeychainHelper.shared.save(rdata, service: "Spotify", account: "refreshToken")
+                    self.refreshToken = newRefresh
                 }
-                
-                // Fetch data now that we have a valid token
-                self?.fetchRecentlyPlayed()
+                completion(true)
             })
             .store(in: &cancellables)
     }
     
     
+    private func isTokenExpired() -> Bool {
+        guard let expiration = accessTokenExpirationDate else {
+            return true // no token → consider expired
+        }
+        // Add a small buffer (e.g., 60s) to refresh slightly before expiry
+        return Date() >= expiration.addingTimeInterval(-60)
+    }
     
     
     

@@ -37,8 +37,10 @@ struct CollapsibleSidebar: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(selectedTab == tab ? Color.blue.opacity(0.2) : Color.clear)
                     .cornerRadius(8)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .focusable(false)
             }
             Spacer()
         }
@@ -58,8 +60,12 @@ struct CollapsibleSidebar: View {
             switch selectedTab {
             case .report:
                 ReportView()
+            case .input:
+                DailyInputView()
             case .music:
                 MusicView()
+            case .weather:
+                WeatherView()
             case .calendar:
                 CalendarView()
             case .routines:
