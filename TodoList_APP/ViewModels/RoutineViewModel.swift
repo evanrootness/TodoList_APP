@@ -45,7 +45,6 @@ class RoutineViewModel: ObservableObject {
         newRoutineName = ""
     }
     
-    
     // Toggle completion
     func toggleCompletion(of routine: Routine) {
         if let index = routines.firstIndex(where: { $0.id == routine.id }) {

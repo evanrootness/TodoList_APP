@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		FA0AC5412E554A4100456293 /* OpenMeteoSdk in Frameworks */ = {isa = PBXBuildFile; productRef = FA0AC5402E554A4100456293 /* OpenMeteoSdk */; };
+		FA0AC5442E56BFC300456293 /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = FA0AC5432E56BFC300456293 /* SQLite */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		FA4DBC1C2E3B039300F5EAE9 /* TodoList_APP.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TodoList_APP.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FA4DBC732E499CE800F5EAE9 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
@@ -24,6 +29,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FA0AC5442E56BFC300456293 /* SQLite in Frameworks */,
+				FA0AC5412E554A4100456293 /* OpenMeteoSdk in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -67,6 +74,8 @@
 			);
 			name = TodoList_APP;
 			packageProductDependencies = (
+				FA0AC5402E554A4100456293 /* OpenMeteoSdk */,
+				FA0AC5432E56BFC300456293 /* SQLite */,
 			);
 			productName = TodoList_APP;
 			productReference = FA4DBC1C2E3B039300F5EAE9 /* TodoList_APP.app */;
@@ -96,6 +105,10 @@
 			);
 			mainGroup = FA4DBC132E3B039300F5EAE9;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				FA0AC53F2E554A4100456293 /* XCRemoteSwiftPackageReference "sdk" */,
+				FA0AC5422E56BFC300456293 /* XCRemoteSwiftPackageReference "SQLite" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = FA4DBC1D2E3B039300F5EAE9 /* Products */;
 			projectDirPath = "";
@@ -264,7 +277,7 @@
 				DEVELOPMENT_TEAM = KUTT9T6T8Z;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "TodoList-APP-Info.plist";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -297,7 +310,7 @@
 				DEVELOPMENT_TEAM = KUTT9T6T8Z;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "TodoList-APP-Info.plist";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -338,6 +351,38 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		FA0AC53F2E554A4100456293 /* XCRemoteSwiftPackageReference "sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/open-meteo/sdk.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.5.0;
+			};
+		};
+		FA0AC5422E56BFC300456293 /* XCRemoteSwiftPackageReference "SQLite" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/stephencelis/SQLite.swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.15.4;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		FA0AC5402E554A4100456293 /* OpenMeteoSdk */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA0AC53F2E554A4100456293 /* XCRemoteSwiftPackageReference "sdk" */;
+			productName = OpenMeteoSdk;
+		};
+		FA0AC5432E56BFC300456293 /* SQLite */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA0AC5422E56BFC300456293 /* XCRemoteSwiftPackageReference "SQLite" */;
+			productName = SQLite;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = FA4DBC142E3B039300F5EAE9 /* Project object */;
 }

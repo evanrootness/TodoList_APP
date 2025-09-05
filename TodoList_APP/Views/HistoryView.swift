@@ -26,6 +26,7 @@ struct HistoryView: View {
                         Text(routine.name)
                             .strikethrough(routine.isCompleted)
                     }
+                    .contentShape(Rectangle())
                 }
                 .onDelete(perform: routineVM.delete)
             }

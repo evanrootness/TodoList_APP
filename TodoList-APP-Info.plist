@@ -23,6 +23,14 @@
     <key>SPOTIFY_REDIRECT_URI</key>
     <string>$(SPOTIFY_REDIRECT_URI)</string>
 
+
+    <!-- Visual Crossing Weather Key -->
+    <key>VISUAL_CROSSING_API_KEY</key>
+    <string>$(VISUAL_CROSSING_API_KEY)</string>
+
+    <!-- NCEI Weather API Key -->
+    <key>NCEI_WEATHER_API_KEY</key>
+    <string>$(NCEI_WEATHER_API_KEY)</string>
     
     <!-- URL Schemes -->
     <key>CFBundleURLTypes</key>

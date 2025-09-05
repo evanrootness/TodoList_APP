@@ -13,8 +13,12 @@ struct TabCoordinator {
         switch tab {
         case .report:
             ReportView()
+        case .input:
+            DailyInputView()
         case .music:
             MusicView()
+        case .weather:
+            WeatherView()
         case .calendar:
             CalendarView()
         case .routines:

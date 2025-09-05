@@ -14,3 +14,9 @@ struct SettingsView: View {
         Text("Settings view fr")
     }
 }
+
+struct SettingsView_Previews: PreviewProvider {
+    static var previews: some View {
+        SettingsView()
+    }
+}
