@@ -21,10 +21,10 @@ struct TabCoordinator {
             WeatherView()
         case .calendar:
             CalendarView()
-        case .routines:
-            RoutinesView()
-        case .history:
-            HistoryView()
+//        case .routines:
+//            RoutinesView()
+//        case .history:
+//            HistoryView()
         case .settings:
             SettingsView()
         }

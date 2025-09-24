@@ -11,14 +11,30 @@ import SwiftUI
 class DailyInputViewModel: ObservableObject {
     @Published var dailyInputComplete: Bool = false
     
-    private var dbHelper: DailyInputDatabaseHelper {
+    private var inputDH: DailyInputDatabaseHelper {
         DailyInputDatabaseHelper.shared
     }
     
     init() {
-        if DailyInputDatabaseHelper.shared == nil {
-            DailyInputDatabaseHelper.configureShared(with: self)
+//        if DailyInputDatabaseHelper.shared == nil {
+//            DailyInputDatabaseHelper.configureShared(with: self)
+//        }
+        
+        // if latest day of dailyInput data is not today, set dailyInputComplete to false
+        if let mostRecent = inputDH.getMostRecentInputDay() {
+            dailyInputComplete = Calendar.current.isDateInToday(mostRecent)
+            // use dailyInputComplete here
+        } else {
+            // handle no data yet
+            print("No most recent input data found")
         }
+        
+        
+        // TO-DO: pull weather data if there is any missing
+        
+        
+        // TO-DO: pull latest music data if missing
+        
     }
     
     
@@ -79,7 +95,7 @@ class DailyInputViewModel: ObservableObject {
     
     
     // function to log daily data that has been input by user
-    func logDailyData(dailyInputDict: [String: String]) {
+    func logDailyData(dailyInputDict: [String: String], inputDate: Date) {
         
         // first check that all fields have been filled
         if !checkDailyInputComplete(dailyInputDict: dailyInputDict) {
@@ -87,7 +103,7 @@ class DailyInputViewModel: ObservableObject {
         }
         
         // then run force insert function
-        insertDailyInput(dailyInputDict: dailyInputDict)
+        insertDailyInput(dailyInputDict: dailyInputDict, inputDate: inputDate)
         
         // then set dailyInputComplete to true to trigger the view changing to the report
         dailyInputComplete = true
@@ -96,22 +112,24 @@ class DailyInputViewModel: ObservableObject {
     }
     
     
-    private func insertDailyInput(dailyInputDict: [String: String]) {
+    private func insertDailyInput(dailyInputDict: [String: String], inputDate: Date) {
         // convert dict values' types from strings
-        let (todaysMood, todaysProductivity, todaysSleep, todaysExercise) = convertInputStrings(inputDict: dailyInputDict)
+        let (mood, productivity, sleep, sleepStart, sleepEnd, exercise) = convertInputStrings(inputDict: dailyInputDict)
         
         // run force insert
-        dbHelper.forceInsertDailyInput(date: Date(), mood: todaysMood, productivity: todaysProductivity, sleep: todaysSleep, exercise: todaysExercise)
+        inputDH.forceInsertDailyInput(date: inputDate, mood: mood, productivity: productivity, sleep: sleep, sleepStart: sleepStart, sleepEnd: sleepEnd, exercise: exercise)
     }
     
     // convert strings to int and double
-    private func convertInputStrings(inputDict: [String: String]) -> (mood: Int, productivity: Int, sleep: Double, exercise: Double) {
+    private func convertInputStrings(inputDict: [String: String]) -> (mood: Int, productivity: Int, sleep: Double, sleepStart: String, sleepEnd: String, exercise: Double) {
         let mood = Int(inputDict["mood"] ?? "0")!
         let productivity = Int(inputDict["productivity"] ?? "0")!
         let sleep = Double(inputDict["sleep"] ?? "0")!
+        let sleepStart = inputDict["sleepStart"] ?? "0"
+        let sleepEnd = inputDict["sleepEnd"] ?? "0"
         let exercise = Double(inputDict["exercise"] ?? "0")!
         
-        return (mood, productivity, sleep, exercise)
+        return (mood, productivity, sleep, sleepStart, sleepEnd, exercise)
     }
     
     

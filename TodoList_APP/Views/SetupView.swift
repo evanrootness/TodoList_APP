@@ -12,7 +12,6 @@
 import SwiftUI
 
 
-
 struct SetupView: View {
     @ObservedObject var weatherVM: WeatherViewModel
 

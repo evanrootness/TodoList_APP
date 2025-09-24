@@ -28,28 +28,22 @@ struct TodoList_APPApp: App {
     @StateObject var weatherDBHelper = WeatherDatabaseHelper.shared
     @StateObject var weatherVM = WeatherViewModel()
     @StateObject var inputVM = DailyInputViewModel()
+    @StateObject var reportVM = ReportViewModel()
     
+    init() {
+        _ = DatabaseManager.shared
+    }
     
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate  // <-- pass the type
     
     var body: some Scene {
-//        WindowGroup {
         Window("TodoList_APP", id: "mainWindow") {
             ContentView()
                 .environmentObject(routineVM)
                 .environmentObject(spotifyAuth)
                 .environmentObject(weatherVM)
                 .environmentObject(inputVM)
-//                .onAppear{
-//                    DatabaseHelper.configureShared(with: inputVM)
-//                }
-            
-//                .onAppear {
-//                    DatabaseHelper.shared.setInputViewModel(inputVM)
-//                }
-//                .onAppear {
-//                    weatherVM.checkAndFetchWeather()
-//                }
+                .environmentObject(reportVM)
         }
     }
 }

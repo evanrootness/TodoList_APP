@@ -18,10 +18,13 @@ class DatabaseManager {
     let moodColumn = Expression<Int?>("mood")
     let productivityColumn = Expression<Int?>("productivity")
     let sleepColumn = Expression<Double?>("sleep")
+    let sleepStartColumn = Expression<String>("sleep_start")
+    let sleepEndColumn = Expression<String>("sleep_end")
     let exerciseColumn = Expression<Double?>("exercise")
     let tempColumn = Expression<Double?>("temp")
     let conditionsColumn = Expression<String?>("conditions")
     let locationColumn = Expression<String?>("location")
+    
 
     private init() {
         do {
@@ -40,6 +43,8 @@ class DatabaseManager {
                 t.column(moodColumn)
                 t.column(productivityColumn)
                 t.column(sleepColumn)
+                t.column(sleepStartColumn)
+                t.column(sleepEndColumn)
                 t.column(exerciseColumn)
                 t.column(tempColumn)
                 t.column(conditionsColumn)
