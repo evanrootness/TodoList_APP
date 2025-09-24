@@ -13,8 +13,8 @@ enum SidebarTab: String, CaseIterable {
          music = "Music",
          weather = "Weather",
          calendar = "Calendar",
-         routines = "Routines",
-         history = "History",
+//         routines = "Routines",
+//         history = "History",
          settings = "Settings"
 
     var icon: String {
@@ -24,8 +24,8 @@ enum SidebarTab: String, CaseIterable {
         case .music: return "music.note"
         case .weather: return "sun.max"
         case .calendar: return "calendar"
-        case .routines: return "clock.arrow.circlepath"
-        case .history: return "book"
+//        case .routines: return "clock.arrow.circlepath"
+//        case .history: return "book"
         case .settings: return "gearshape"
         }
     }

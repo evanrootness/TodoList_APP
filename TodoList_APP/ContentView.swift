@@ -11,10 +11,9 @@ struct ContentView: View {
     @State private var selectedTab: SidebarTab = .report
     @EnvironmentObject var routineVM: RoutineViewModel
     @EnvironmentObject var spotifyAuth: SpotifyAuthManager
-    @EnvironmentObject var weatherDBHelper: WeatherDatabaseHelper
     @EnvironmentObject var weatherVM: WeatherViewModel
     @EnvironmentObject var inputVM: DailyInputViewModel
-    @EnvironmentObject var inputDH: DailyInputDatabaseHelper
+    @EnvironmentObject var reportVM: ReportViewModel
     
     var body: some View {
         ZStack {
@@ -23,7 +22,9 @@ struct ContentView: View {
                 CollapsibleSidebar(selectedTab: $selectedTab)
             }
             
-            if spotifyAuth.accessToken == nil {
+//            if !spotifyAuth.isTokenValid() {
+//            if spotifyAuth.accessToken == nil {
+            if !spotifyAuth.isLoggedIn {
                 Color.black.opacity(0.4)
                     .edgesIgnoringSafeArea(.all)
                 VStack {
@@ -41,20 +42,31 @@ struct ContentView: View {
             }
             
             if weatherVM.showSetupWindow {
+                // Dimmed background that blocks touches
+                Color.black.opacity(0.5)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(true)
+                // SetupView on top
                 SetupView(weatherVM: weatherVM)
+                    .frame(width: 350, height: 250)
                     .background(Color.white)
                     .cornerRadius(12)
                     .shadow(radius: 10)
+                    .zIndex(1) // on top of all other views
             }
         }
         .task {
             if !inputVM.dailyInputComplete {
                 selectedTab = .input
+            } else {
+                selectedTab = .report
             }
         }
         .onChange(of: inputVM.dailyInputComplete) {
-//            print("onChange triggered. Value: \(inputVM.dailyInputComplete)")
+            // switch to the report view when daily input is complete
             selectedTab = inputVM.dailyInputComplete ? .report : .input
+            // refresh reportData and recalculate report metrics
+            reportVM.refreshReportData()
         }
     }
 }

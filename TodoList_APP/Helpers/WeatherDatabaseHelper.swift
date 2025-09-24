@@ -12,15 +12,16 @@ import SQLite3
 
 class WeatherDatabaseHelper: ObservableObject {
     static let shared = WeatherDatabaseHelper()
-    private var db: Connection?
+
+    private let db = DatabaseManager.shared.db
+    private let mainTable = DatabaseManager.shared.mainTable
+        
+    private let dateColumn = DatabaseManager.shared.dateColumn
+    private let tempColumn = DatabaseManager.shared.tempColumn
+    private let conditionsColumn = DatabaseManager.shared.conditionsColumn
+    private let locationColumn = DatabaseManager.shared.locationColumn
     
-    private let weatherTable = Table("weather")
-    private let dateColumn = Expression<String>("date")
-    private let tempColumn = Expression<Double>("temp")
-    private let conditionsColumn = Expression<String>("conditions")
-    private let locationColumn = Expression<String>("location")
-    private var cancellables = Set<AnyCancellable>()
-    
+   
     private let apiKey: String = {
         guard let value = Bundle.main.object(forInfoDictionaryKey: "VISUAL_CROSSING_API_KEY") as? String else {
             fatalError("Missing VISUAL_CROSSING_API_KEY in Info.plist")
@@ -33,84 +34,33 @@ class WeatherDatabaseHelper: ObservableObject {
     // initialize one day ago
     var oneDayAgo = Calendar.current.date(byAdding: .day, value: -1, to: Date())!
     
-    //    private init() {
-    //        do {
-    //            let path = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-    //            db = try Connection(path.appendingPathComponent("weather.sqlite3").path)
-    //            try createTable()
-    //            print("Database path: \(path.appendingPathComponent("weather.sqlite3").path)")
-    //        } catch {
-    //            print("Database connection error: \(error)")
-    //        }
-    //    }
-    
-    private init() {
-        do {
-            let path = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
-            db = try Connection("\(path)/weather.sqlite3")
-//            print("Database connection success")
-        } catch {
-            print("Database connection failed: \(error)")
-        }
-    }
-    
-    func tableExists() -> Bool {
-        guard let db = db else { return false }
-        do {
-            let stmt = try db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='weather'")
-            return try stmt.makeIterator().next() != nil
-        } catch {
-            print("Error checking table existence: \(error)")
-            return false
-        }
-    }
-    
-    private func createTable() throws {
-        do {
-            try db?.run(weatherTable.create(ifNotExists: true) { t in
-                t.column(dateColumn, primaryKey: true) // unique date
-                t.column(tempColumn)
-                t.column(conditionsColumn)
-                t.column(locationColumn)
-            })
-            print("Table created or already exists")
-        } catch {
-            print("Table creation error: \(error)")
-        }
-    }
-    
-    func ensureTableExists() {
-        do {
-            try createTable()
-        } catch {
-            print("Error ensuring table exists: \(error)")
-        }
-    }
     
     
     // replace a row of weather data if already in table, otherwise insert new row
     func forceInsertWeatherRow(date: Date, temp: Double, conditions: String, location: String) {
+        
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone(secondsFromGMT: 0) // UTC
         let dateString = formatter.string(from: date)
         
         do {
             // Check if row does not exist
-            let query = weatherTable.filter(dateColumn == dateString)
-            if try db?.pluck(query) == nil {
+            let query = mainTable.filter(dateColumn == dateString)
+            if try db.pluck(query) == nil {
                 // Insert new record
-                try db?.run(weatherTable.insert(
+                try db.run(mainTable.insert(
                     dateColumn <- dateString,
                     tempColumn <- temp,
                     conditionsColumn <- conditions,
                     locationColumn <- location
                 ))
             } else { // row does exist, so we need to update row
-//                print("Weather for \(dateString) already exists.")
+//                print("Weather for \(dateString) already exists. Running update on row...")
                 // make sure we scope the update to only be the row we want
-                let query = weatherTable.filter(dateColumn == dateString)
+                let query = mainTable.filter(dateColumn == dateString)
                 // update row
-                try db?.run(query.update(
+                try db.run(query.update(
                     tempColumn <- temp,
                     conditionsColumn <- conditions,
                     locationColumn <- location
@@ -128,14 +78,19 @@ class WeatherDatabaseHelper: ObservableObject {
         formatter.dateFormat = "yyyy-MM-dd"
         
         do {
-            for row in try db!.prepare(weatherTable) {
+            let filteredTable = mainTable
+                .filter(tempColumn != nil)
+                .filter(conditionsColumn != nil)
+                .filter(locationColumn != nil)
+            
+            for row in try db.prepare(filteredTable) {
                 if let date = formatter.date(from: row[dateColumn]) {
                     results.append(
                         HistoricalWeatherDay(
                             date: date,
-                            temp: row[tempColumn],
-                            conditions: row[conditionsColumn],
-                            location: row[locationColumn]
+                            temp: row[tempColumn] ?? 0,
+                            conditions: row[conditionsColumn] ?? "",
+                            location: row[locationColumn] ?? ""
                         )
                     )
                 }
@@ -148,8 +103,9 @@ class WeatherDatabaseHelper: ObservableObject {
     
     
     
-    func fetchWeather(start: Date, end: Date, selectedUnits: Units, location: String, completion: @escaping (Swift.Result<[HistoricalWeatherDay], Error>) -> Void) {
-        
+    func fetchWeather(start: Date, end: Date, location: String, completion: @escaping (Swift.Result<[HistoricalWeatherDay], Error>) -> Void) {
+        // for now, always farenheit unit for temperature
+        let units = "us"
         // Ensure the location is not empty
         guard !location.isEmpty else {
             print("Location is empty. Exiting fetchWeather function.")
@@ -159,10 +115,18 @@ class WeatherDatabaseHelper: ObservableObject {
         
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone(secondsFromGMT: 0) // UTC
         let startStr = formatter.string(from: start)
         let endStr = formatter.string(from: end)
+        let urlString: String
         
-        let urlString = "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/\(location)/\(startStr)/\(endStr)?unitGroup=\(selectedUnits)&include=days&key=\(apiKey)&contentType=json"
+        if startStr == endStr {
+            // One day only
+            urlString = "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/\(location)/\(startStr)?unitGroup=\(units)&include=days&key=\(apiKey)&contentType=json"
+        } else {
+            // Range of days
+            urlString = "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/\(location)/\(startStr)/\(endStr)?unitGroup=\(units)&include=days&key=\(apiKey)&contentType=json"
+        }
         
         guard let url = URL(string: urlString) else {
             print("Invalid URL")
@@ -191,8 +155,17 @@ class WeatherDatabaseHelper: ObservableObject {
             do {
                 let decoded = try JSONDecoder().decode(VisualCrossingResponse.self, from: data)
                 
+//                // Insert into DB (convert returned UTC → local CST midnight)
+//                let localCalendar = Calendar.current
+//                let localTZ = TimeZone(identifier: "America/Chicago")!
+//                
                 // Insert into database
                 for day in decoded.days {
+//                    let utcDate = day.datetime
+//                    let comps = localCalendar.dateComponents([.year, .month, .day], from: utcDate.addingTimeInterval(TimeInterval(localTZ.secondsFromGMT(for: utcDate))))
+//                    let localDay = localCalendar.date(from: comps)!
+//                    print("UTC date: \(utcDate), Local date: \(localDay)")
+    
                     self.forceInsertWeatherRow(
                         date: day.datetime,
                         temp: day.tempmax,
@@ -219,12 +192,19 @@ class WeatherDatabaseHelper: ObservableObject {
     
     
     
-    //    function to get the most recent weather day that has been retrieved
+    //    function to get the most recent weather day that has been retrieved NEED TO ALTER FOR main_table with filters
     func getMostRecentWeatherDay() -> Date? {
+//        print("running getMostRecentWeatherDay...")
         // get latest day
         do {
-            if let latestRow = try self.db?.pluck(self.weatherTable.order(self.dateColumn.desc)) {
-                let latestDayString = latestRow[self.dateColumn]
+            // Only select rows where none of the required columns are NULL or empty
+            let filteredTable = mainTable
+                .filter(tempColumn != nil )
+                .filter(conditionsColumn != nil)
+                .filter(locationColumn != nil)
+            
+            if let latestRow = try db.pluck(filteredTable.order(dateColumn.desc)) {
+                let latestDayString = latestRow[dateColumn]
                 
                 let dateFormatter = DateFormatter()
                 dateFormatter.dateFormat = "yyyy-MM-dd"
@@ -233,7 +213,7 @@ class WeatherDatabaseHelper: ObservableObject {
                     return latestDay
                 }
             } else {
-                print("No data in table yet.")
+                print("No weather data in table yet.")
                 return nil
             }
         } catch {
@@ -246,19 +226,15 @@ class WeatherDatabaseHelper: ObservableObject {
     
     func fetchLatestLocation() -> String? {
         do {
-            // Path to your database
-            let path = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-            let db = try Connection(path.appendingPathComponent("weather.sqlite3").path)
-            
-            //            // Reference to the table
-            //            let weatherTable = Table("weather")
-            
-            //            // Columns (must match your schema)
-            //            let locationColumn = Expression<String>("location")
-            //            let dateColumn = Expression<Date>("date")
+            // Only select rows where none of the required columns are NULL or empty
+            let filteredTable = mainTable
+                .filter(tempColumn != nil )
+                .filter(conditionsColumn != nil)
+                .filter(locationColumn != nil)
             
             // Query to get the latest location by most recent date
-            if let row = try db.pluck(weatherTable.order(dateColumn.desc)) {
+            if let row = try db.pluck(filteredTable.order(dateColumn.desc)) {
+//                print("Latest location: \(row[locationColumn])")
                 return row[locationColumn]
             } else {
                 return nil
