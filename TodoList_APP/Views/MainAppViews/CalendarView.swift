@@ -112,43 +112,43 @@ struct CalendarView: View {
         switch mood {
         case let c where c == 1:
             return LinearGradient(
-                colors: [Color(red: 0.1, green: 0.05, blue: 0.1), Color(red: 0.2, green: 0.1, blue: 0.25), Color(red: 0.3, green: 0.3, blue: 0.4)],
+                colors: [Color(red: 0.01, green: 0.01, blue: 0.03), Color(red: 0.05, green: 0.05, blue: 0.15), Color(red: 0.15, green: 0.1, blue: 0.25)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
         case let c where c == 2:
             return LinearGradient(
-                colors: [Color(red: 0.2, green: 0.05, blue: 0.2), Color(red: 0.3, green: 0.2, blue: 0.4), Color(red: 0.3, green: 0.4, blue: 0.5)],
+                colors: [Color(red: 0.1, green: 0.02, blue: 0.14), Color(red: 0.15, green: 0.11, blue: 0.32), Color(red: 0.25, green: 0.2, blue: 0.5)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
         case let c where c == 3:
             return LinearGradient(
-                colors: [Color(red: 0.3, green: 0.1, blue: 0.3), Color(red: 0.4, green: 0.3, blue: 0.6), Color(red: 0.3, green: 0.5, blue: 0.7)],
+                colors: [Color(red: 0.2, green: 0.05, blue: 0.25), Color(red: 0.27, green: 0.2, blue: 0.5), Color(red: 0.35, green: 0.4, blue: 0.7)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
         case let c where c == 4:
             return LinearGradient(
-                colors: [Color(red: 0.25, green: 0.2, blue: 0.35), Color(red: 0.5, green: 0.4, blue: 0.65), Color(red: 0.5, green: 0.7, blue: 0.85)],
+                colors: [Color(red: 0.35, green: 0.1, blue: 0.4), Color(red: 0.35, green: 0.35, blue: 0.6), Color(red: 0.3, green: 0.55, blue: 0.9)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
         case let c where c == 5:
             return LinearGradient(
-                colors: [Color(red: 0.1, green: 0.4, blue: 0.5), Color(red: 0.5, green: 0.6, blue: 0.8), Color(red: 0.4, green: 0.8, blue: 1.0)],
+                colors: [Color(red: 0.3, green: 0.2, blue: 0.5), Color(red: 0.2, green: 0.5, blue: 0.8), Color(red: 0.2, green: 0.8, blue: 0.9)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
         case let c where c == 6:
             return LinearGradient(
-                colors: [Color(red: 0.45, green: 0.55, blue: 0.7), Color(red: 0.22, green: 0.8, blue: 0.85), Color(red: 0.47, green: 0.87, blue: 0.65)],
+                colors: [Color(red: 0.3, green: 0.35, blue: 0.7), Color(red: 0.22, green: 0.65, blue: 0.85), Color(red: 0.47, green: 0.87, blue: 0.65)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
         case let c where c == 7:
             return LinearGradient(
-                colors: [Color(red: 0.2, green: 0.7, blue: 0.85), Color(red: 0.14, green: 0.95, blue: 0.7)],
+                colors: [Color(red: 0.2, green: 0.65, blue: 0.85), Color(red: 0.14, green: 0.95, blue: 0.7)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )

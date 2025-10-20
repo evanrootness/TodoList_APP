@@ -22,8 +22,6 @@ struct ContentView: View {
                 CollapsibleSidebar(selectedTab: $selectedTab)
             }
             
-//            if !spotifyAuth.isTokenValid() {
-//            if spotifyAuth.accessToken == nil {
             if !spotifyAuth.isLoggedIn {
                 Color.black.opacity(0.4)
                     .edgesIgnoringSafeArea(.all)
@@ -56,6 +54,7 @@ struct ContentView: View {
             }
         }
         .task {
+            // determine what tab to start on
             if !inputVM.dailyInputComplete {
                 selectedTab = .input
             } else {

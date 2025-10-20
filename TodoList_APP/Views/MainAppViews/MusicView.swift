@@ -11,6 +11,12 @@ import SwiftUI
 struct MusicView: View {
     @EnvironmentObject var spotifyAuth: SpotifyAuthManager
     
+    let scorecardGradient = LinearGradient(
+        colors: [Color(red: 0.4, green: 0.1, blue: 0.6), Color(red: 0.32, green: 0.33, blue: 0.67), Color(red: 0.22, green: 0.5, blue: 0.8)],
+        startPoint: .bottomLeading,
+        endPoint: .topTrailing
+    )
+    
     var body: some View {
         if !spotifyAuth.isLoggedIn {
 //        if !spotifyAuth.isTokenValid() {
@@ -29,58 +35,85 @@ struct MusicView: View {
                     
                     VStack {
                         
-                        VStack {
-                            Text("Time Listened Past Week")
-                                .padding(.top, 15)
-                                .font(.system(size: 16, design: .serif))
-                                .foregroundColor(.white)
-                            Text(String(format: "%.1f", spotifyAuth.timeListenedPastWeek))
-                                .padding([.leading, .trailing], 30)
-                                .font(.system(size: 28, design: .serif))
-                                .foregroundColor(.white)
-                            Text("hours")
+                        Text("Past Week Stats")
+                            .font(.headline)
+                        HStack(spacing: 20) {
+                            VStack {
+                                Text("Listened to")
+                                    .padding([.top, .leading, .trailing], 15)
+                                    .padding(.bottom, 1)
+                                    .font(.system(size: 20, design: .serif))
+                                    .foregroundColor(.white)
+                                    .fontWeight(.bold)
+                                    .lineLimit(1)
+                                HStack(alignment:.firstTextBaseline) {
+                                    Text(String(format: "%.1f", spotifyAuth.timeListenedPastWeek))
+                                        .font(.system(size: 28, design: .serif))
+                                        .foregroundColor(.white)
+                                        .fontWeight(.thin)
+                                    Text("Hrs.")
+                                        .font(.system(size: 24, design: .serif))
+                                        .foregroundColor(.white)
+                                        .fontWeight(.thin)
+                                }
+                                .padding([.leading, .trailing], 20)
                                 .padding(.bottom, 15)
-                                .font(.system(size: 16, design: .serif))
-                                .foregroundColor(.white)
+
+                            }
+                            .frame(width: 150, height: 120)
+                            .background(scorecardGradient)
+                            .cornerRadius(10)
+                            
+                            VStack {
+                                Text("Top Artist")
+                                    .padding([.top, .leading, .trailing], 15)
+                                    .padding(.bottom, 1)
+                                    .font(.system(size: 20, design: .serif))
+                                    .foregroundColor(.white)
+                                    .fontWeight(.bold)
+                                    .lineLimit(1)
+                                Text("\(spotifyAuth.topArtistPastWeek)")
+                                    .padding([.leading, .trailing], 30)
+                                    .padding(.bottom, 15)
+                                    .font(.system(size: 24, design: .serif))
+                                    .foregroundColor(.white)
+                                    .lineLimit(2)
+                                    .fontWeight(.thin)
+                                    .minimumScaleFactor(0.8)
+                            }
+                            .frame(width: 150, height: 120)
+                            .background(scorecardGradient)
+                            .cornerRadius(10)
+                            
+                            VStack {
+                                Text("Top Genre")
+                                    .padding([.top, .leading, .trailing], 15)
+                                    .padding(.bottom, 1)
+                                    .font(.system(size: 20, design: .serif))
+                                    .foregroundColor(.white)
+                                    .fontWeight(.bold)
+                                    .lineLimit(1)
+                                Text("\(spotifyAuth.topGenrePastWeek)".capitalized)
+                                    .padding([.leading, .trailing], 30)
+                                    .padding(.bottom, 15)
+                                    .font(.system(size: 26, design: .serif))
+                                    .foregroundColor(.white)
+                                    .lineLimit(2)
+                                    .fontWeight(.thin)
+                                    .minimumScaleFactor(0.8)
+                            }
+                            .frame(width: 150, height: 120)
+                            .background(scorecardGradient)
+                            .cornerRadius(10)
+ 
                         }
-//                        .background(streakGradient)
-                        .background(.gray)
-                        .cornerRadius(10)
-                        .frame(width: 150)
-                        .frame(minHeight: 50)
                         
-                        VStack {
-                            Text("Top Artist the Past Week:")
-                                .padding(.top, 15)
-                                .font(.system(size: 16, design: .serif))
-                                .foregroundColor(.white)
-                            Text("\(spotifyAuth.topArtistPastWeek)")
-                                .padding([.leading, .trailing], 30)
-                                .font(.system(size: 28, design: .serif))
-                                .foregroundColor(.white)
-                        }
-//                        .background(streakGradient)
-                        .background(.gray)
-                        .cornerRadius(10)
-                        .frame(width: 150)
-                        .frame(minHeight: 50)
                         
-                        VStack {
-                            Text("Top Genre in the Past Week:")
-                                .padding(.top, 15)
-                                .font(.system(size: 16, design: .serif))
-                                .foregroundColor(.white)
-                            Text("\(spotifyAuth.topGenrePastWeek)".capitalized)
-                                .padding([.leading, .trailing], 30)
-                                .font(.system(size: 28, design: .serif))
-                                .foregroundColor(.white)
-                        }
-//                        .background(streakGradient)
-                        .background(.gray)
-                        .cornerRadius(10)
-                        .frame(width: 150)
-                        .frame(minHeight: 50)
                         
+                        Text("Listening Time")
+                            .font(.headline)
+                        ListeningTimeChartView()
+
                         
                         
                     }

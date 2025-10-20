@@ -28,6 +28,7 @@ class DailyInputViewModel: ObservableObject {
             // handle no data yet
             print("No most recent input data found")
         }
+        // if latest day of input
         
         
         // TO-DO: pull weather data if there is any missing

@@ -15,7 +15,62 @@ struct ReportView: View {
     @State private var selectedXAxis: String = "Sleep"
     @State private var selectedYAxis: String = "Mood"
     
-    let availableAxes = ["Mood", "Productivity", "Temp", "Sleep", "Exercise"]
+    var filteredDataPoints: [ScatterPlotView.DataPoint] {
+        reportVM.reportData.compactMap { data in
+            let x: Double?
+            let y: Double?
+            
+            // X-axis mapping
+            switch selectedXAxis {
+            case "Sleep Start":
+                x = sleepHourForChart(data.sleepStart)
+            case "Sleep End":
+                x = timeToHourFraction(data.sleepEnd)
+            case "Mood":
+                x = data.mood
+            case "Productivity":
+                x = data.productivity
+            case "Sleep":
+                x = data.sleep
+            case "Exercise":
+                x = data.exercise
+            case "Temperature":
+                x = data.temp
+            default:
+                x = nil
+            }
+            
+            // Y-axis mapping
+            switch selectedYAxis {
+            case "Sleep Start":
+                y = sleepHourForChart(data.sleepStart)
+            case "Sleep End":
+                y = timeToHourFraction(data.sleepEnd)
+            case "Mood":
+                y = data.mood
+            case "Productivity":
+                y = data.productivity
+            case "Sleep":
+                y = data.sleep
+            case "Exercise":
+                y = data.exercise
+            case "Temperature":
+                y = data.temp
+            default:
+                y = nil
+            }
+            
+            // Only keep rows with valid numeric X and Y
+            if let x = x, let y = y, !x.isNaN, !y.isNaN {
+                return ScatterPlotView.DataPoint(x: x, y: y)
+            } else {
+                return nil
+            }
+        }
+    }
+
+    
+    let availableAxes = ["Mood", "Productivity", "Temperature", "Sleep", "Exercise", "Sleep Start", "Sleep End"]
     
     let calendar = Calendar.current
     
@@ -36,11 +91,62 @@ struct ReportView: View {
         switch axis {
         case "Mood": return reportVM.reportData.map { Double($0.mood) }
         case "Productivity": return reportVM.reportData.map { Double($0.productivity) }
-        case "Temp": return reportVM.reportData.map { $0.temp }
         case "Sleep": return reportVM.reportData.map { $0.sleep }
         case "Exercise": return reportVM.reportData.map { $0.exercise }
+            
+        case "Temp": return reportVM.reportData.map {
+//            $0.temp
+            
+            $0.temp != nil ? $0.temp! : Double.nan
+        }
+            
+
+//        case "Sleep Start": return reportVM.reportData.map { sleepHourForChart($0.sleepStart)}
+        case "Sleep Start": return reportVM.reportData.compactMap { data in
+//            guard let sleepStart = dataRow.sleepStart else { return nil }
+//            return sleepHourForChart(sleepStart)
+            
+//            $0.sleepStart != nil ? sleepHourForChart($0.sleepStart!) : Double.nan
+            
+            let value = sleepHourForChart(data.sleepStart)
+            return value.isNaN ? nil : value
+        }
+            
+//        case "Sleep End": return reportVM.reportData.map { timeToHourFraction($0.sleepEnd) }
+        case "Sleep End": return reportVM.reportData.compactMap { data in
+//            guard let sleepEnd = dataRow.sleepEnd else { return nil }
+//            return timeToHourFraction(sleepEnd)
+            
+//            $0.sleepEnd != nil ? timeToHourFraction($0.sleepEnd!) : Double.nan
+            
+            let value = timeToHourFraction(data.sleepEnd)
+            return value.isNaN ? nil : value
+        }
+        
         default: return []
         }
+    }
+    
+    func timeToHourFraction(_ date: Date?) -> Double {
+        guard let date = date else { return Double.nan }
+        let comps = Calendar.current.dateComponents([.hour, .minute], from: date)
+        return Double(comps.hour ?? 0) + Double(comps.minute ?? 0) / 60.0
+    }
+    
+    func hoursSinceMidnight(_ date: Date) -> Double {
+        let comps = Calendar.current.dateComponents([.hour, .minute], from: date)
+        let hours = Double(comps.hour ?? 0)
+        let minutes = Double(comps.minute ?? 0)
+        return hours + minutes / 60.0
+    }
+    
+    func sleepHourForChart(_ date: Date?) -> Double {
+        guard let date = date else { return Double.nan }
+        var hour = hoursSinceMidnight(date)
+        if hour < 12 { // consider times after midnight as +24
+            hour += 24
+        }
+        return hour
     }
     
     
@@ -49,39 +155,79 @@ struct ReportView: View {
         ScrollView {
             VStack {
                 
-                Text("Key Metrics")
-                    .font(.system(size: 16, design: .serif))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
+//                Text("Key Metrics")
+//                    .font(.system(size: 16, design: .serif))
+//                    .frame(maxWidth: .infinity, alignment: .leading)
+//                    .padding()
 
                 // Scorecard row
-                HStack (spacing: 0) {
-                    VStack {
-                        Text("Streak")
-                            .padding(.top, 15)
-                            .font(.system(size: 16, design: .serif))
-                            .foregroundColor(.white)
-                        Text("\(reportVM.inputStreak)")
-                            .padding([.leading, .trailing], 30)
-                            .font(.system(size: 28, design: .serif))
-                            .foregroundColor(.white)
-                        Text("Days")
-                            .padding(.bottom, 15)
-                            .font(.system(size: 16, design: .serif))
-                            .foregroundColor(.white)
-                    }
-                    .background(streakGradient)
-                    .cornerRadius(10)
-                    .frame(width: 150)
-                    .frame(minHeight: 50)
+                HStack (spacing: 10) {
                     
-                    lastWeekScorecard(title: "Mood", avg: reportVM.getAvgLastWeek(\.mood))
-                    lastWeekScorecard(title: "Prod", avg: reportVM.getAvgLastWeek(\.productivity))
-                    lastWeekScorecard(title: "Sleep", avg: reportVM.getAvgLastWeek(\.sleep))
-                    lastWeekScorecard(title: "Exercise", avg: reportVM.getAvgLastWeek(\.exercise))
+                    // Streak
+                    VStack{
+                        Text("Streak")
+                            .font(.system(size: 16, design: .serif))
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding()
+                        
+                        VStack {
+                            Text("Streak")
+                                .padding(.top, 15)
+                                .font(.system(size: 16, design: .serif))
+                                .foregroundColor(.white)
+                            Text("\(reportVM.inputStreak)")
+                                .padding([.leading, .trailing], 30)
+                                .font(.system(size: 28, design: .serif))
+                                .foregroundColor(.white)
+                            Text("Days")
+                                .padding(.bottom, 15)
+                                .font(.system(size: 16, design: .serif))
+                                .foregroundColor(.white)
+                        }
+                        .background(streakGradient)
+                        .cornerRadius(10)
+                        .frame(width: 150)
+                        .frame(minHeight: 50)
+                    }
+                    
+                    // Last Week
+                    VStack {
+                        
+                        Text("Last Week's Averages")
+                            .font(.system(size: 16, design: .serif))
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding([.leading], 10)
+                        
+                        HStack(spacing: 10) {
+                            lastWeekScorecard(title: "Mood", avg: reportVM.getAvg(\.mood, numDays: -7))
+                            lastWeekScorecard(title: "Prod", avg: reportVM.getAvg(\.productivity, numDays: -7))
+                            lastWeekScorecard(title: "Sleep", avg: reportVM.getAvg(\.sleep, numDays: -7))
+                            lastWeekScorecard(title: "Exercise", avg: reportVM.getAvg(\.exercise, numDays: -7))
+                        }
+                        .frame(alignment: .leading)
+                        
+                        // Last Month
+                        
+                        Text("Last Month's Averages")
+                            .font(.system(size: 16, design: .serif))
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding([.leading], 10)
+                        
+                        HStack(spacing: 10) {
+                            lastMonthScorecard(title: "Mood", avg: reportVM.getAvg(\.mood, numDays: -30))
+                            lastMonthScorecard(title: "Prod", avg: reportVM.getAvg(\.productivity, numDays: -30))
+                            lastMonthScorecard(title: "Sleep", avg: reportVM.getAvg(\.sleep, numDays: -30))
+                            lastMonthScorecard(title: "Exercise", avg: reportVM.getAvg(\.exercise, numDays: -30))
+                        }
+                        .frame(alignment: .leading)
+                            
+ 
+                        
+                    }
+                    .padding([.top, .leading, .trailing], 10)
+                    .frame(maxWidth: .infinity)
+                    
                 }
-                
-                
                 
                 
                 // Hstack calendar and chart
@@ -186,13 +332,15 @@ struct ReportView: View {
                             Spacer()
                         }
                         
-                        // Build correlation points dynamically
-                        let xValues = values(for: selectedXAxis)
-                        let yValues = values(for: selectedYAxis)
-                        let correlationPoints = zip(xValues, yValues).map { ScatterPlotView.DataPoint(x: $0, y: $1) }
-
+//                        // Build correlation points dynamically
+//                        let xValues = values(for: selectedXAxis)
+//                        let yValues = values(for: selectedYAxis)
+//                        
+//                        let correlationPoints = zip(xValues, yValues).map { ScatterPlotView.DataPoint(x: $0, y: $1) }
                         
-                        ScatterPlotView(xAxisTitle: selectedXAxis, yAxisTitle: selectedYAxis, points: correlationPoints)
+//                        ScatterPlotView(xAxisTitle: selectedXAxis, yAxisTitle: selectedYAxis, points: correlationPoints)
+                        ScatterPlotView(xAxisTitle: selectedXAxis, yAxisTitle: selectedYAxis, points: filteredDataPoints)
+
                         
                         // Axes pickers
                         HStack {
@@ -212,6 +360,16 @@ struct ReportView: View {
                     }
                     .padding(10)
                 }
+                
+                
+                // Row of listening history and ...
+                HStack {
+                    ListeningTimeChartView()
+                    
+                }
+                
+                ReportDataTableView(reportVM: reportVM)
+                
             }
         }
 //        .onAppear {
@@ -268,32 +426,66 @@ struct lastWeekScorecard: View {
     let avg: Double
     
     let scorecardGradient = LinearGradient(
-        colors: [Color(red: 0.2, green: 0.2, blue: 0.6), Color(red: 0.22, green: 0.6, blue: 0.8), Color(red: 0.85, green: 0.8, blue: 0.3)],
+        colors: [Color(red: 0.2, green: 0.2, blue: 0.6), Color(red: 0.22, green: 0.6, blue: 0.8), Color(red: 0.5, green: 0.8, blue: 0.6)],
         startPoint: .bottomLeading,
         endPoint: .top
     )
     
+    var body: some View {
+        
+        VStack {
+            Text("\(title)")
+//                .padding([.leading, .top, .trailing], 15)
+                .padding(.top, 20)
+                .font(.system(size: 16, design: .serif))
+                .foregroundColor(.white)
+                .frame(width: 100)
+            Text(String(format: "%.1f", avg))
+//                .padding([.leading, .trailing], 20)
+                .padding(.bottom, 20)
+                .font(.system(size: 28, design: .serif))
+                .foregroundColor(.white)
+                .frame(width: 100)
+        }
+        .background(scorecardGradient)
+        .cornerRadius(10)
+        .frame(height: 100)
+//        .frame(maxWidth: 150, minHeight: 50)
+    }
+}
+
+
+struct lastMonthScorecard: View {
+    @EnvironmentObject var reportVM: ReportViewModel
+    let title: String
+    let avg: Double
+    
+    let scorecardGradient = LinearGradient(
+        colors: [Color(red: 0.5, green: 0.15, blue: 0.6), Color(red: 0.45, green: 0.4, blue: 0.85), Color(red: 0.8, green: 0.6, blue: 0.6)],
+        startPoint: .bottomLeading,
+        endPoint: .top
+    )
     
     var body: some View {
         
         VStack {
-            Text("Avg \(title)")
-                .padding([.leading, .top, .trailing], 15)
+            Text("\(title)")
+//                .padding([.leading, .top, .trailing], 15)
+                .padding(.top, 20)
                 .font(.system(size: 16, design: .serif))
                 .foregroundColor(.white)
+                .frame(width: 100)
             Text(String(format: "%.1f", avg))
-                .padding([.leading, .trailing], 15)
+//                .padding([.leading, .trailing], 20)
+                .padding(.bottom, 20)
                 .font(.system(size: 28, design: .serif))
                 .foregroundColor(.white)
-            Text("Last Week")
-                .padding([.leading, .bottom, .trailing], 15)
-                .font(.system(size: 16, design: .serif))
-                .foregroundColor(.white)
+                .frame(width: 100)
         }
         .background(scorecardGradient)
         .cornerRadius(10)
-        .frame(maxWidth: 150, minHeight: 50)
-        .frame(minWidth: 130)
+        .frame(height: 100)
+//        .frame(maxWidth: 150, minHeight: 50)
     }
 }
 

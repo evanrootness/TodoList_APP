@@ -13,7 +13,7 @@ struct DailyInputView: View {
     @EnvironmentObject var inputVM: DailyInputViewModel
     
     @State private var dailyInputDict: [String: String] = [:]
-    
+
     @State private var sleepStart = Date()
     @State private var sleepEnd = Date()
     @State private var inputDate = Date()
@@ -47,6 +47,12 @@ struct DailyInputView: View {
                 Text("How productive were you today?")
                     .frame(maxWidth: .infinity, alignment: .leading)
                 TextField("1-10", text: $dailyInputDict.stringBinding(forKey: "productivity"))
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                
+
+                Text("How long did you exercise today?")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                TextField("Enter in hours", text: $dailyInputDict.stringBinding(forKey: "exercise"))
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                 
                 
@@ -102,10 +108,6 @@ struct DailyInputView: View {
 //                TextField("Enter in hours", text: $dailyInputDict.stringBinding(forKey: "sleep"))
 //                    .textFieldStyle(RoundedBorderTextFieldStyle())
                 
-                Text("How long did you exercise today?")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                TextField("Enter in hours", text: $dailyInputDict.stringBinding(forKey: "exercise"))
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
                 
             }
             .frame(maxHeight: .infinity)

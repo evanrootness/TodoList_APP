@@ -19,8 +19,8 @@ struct TabCoordinator {
             MusicView()
         case .weather:
             WeatherView()
-        case .calendar:
-            CalendarView()
+//        case .calendar:
+//            CalendarView()
 //        case .routines:
 //            RoutinesView()
 //        case .history:
