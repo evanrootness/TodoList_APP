@@ -11,35 +11,55 @@ import SwiftUI
 
 class ReportViewModel: ObservableObject {
     @Published var reportData: [reportDataRow] = []
+    
     @Published var inputStreak: Int = 0
     @Published var avgMoodLastWeek: Double = -999.0
     @Published var avgProdLastWeek: Double = -999.0
     @Published var avgSleepLastWeek: Double = -999.0
     @Published var avgExerciseLastWeek: Double = -999.0
+    
+    @Published var avgMoodLastMonth: Double = -999.0
+    @Published var avgProdLastMonth: Double = -999.0
+    @Published var avgSleepLastMonth: Double = -999.0
+    @Published var avgExerciseLastMonth: Double = -999.0
 
     
     private let reportDH = ReportDatabaseHelper.shared
     
     init() {
         // initalize reportData as whatever it is on open
-        self.reportData = reportDH.selectAllNonNull()
+//        self.reportData = reportDH.selectAllNonNull()
+        self.reportData = reportDH.selectAllMain()
         self.inputStreak = getInputStreak()
-        self.avgMoodLastWeek = getAvgLastWeek(\.mood)
-        self.avgProdLastWeek = getAvgLastWeek(\.productivity)
-        self.avgSleepLastWeek = getAvgLastWeek(\.sleep)
-        self.avgExerciseLastWeek = getAvgLastWeek(\.exercise)
+        
+        self.avgMoodLastWeek = getAvg(\.mood, numDays: -7)
+        self.avgProdLastWeek = getAvg(\.productivity, numDays: -7)
+        self.avgSleepLastWeek = getAvg(\.sleep, numDays: -7)
+        self.avgExerciseLastWeek = getAvg(\.exercise, numDays: -7)
+        
+        self.avgMoodLastMonth = getAvg(\.mood, numDays: -30)
+        self.avgProdLastMonth = getAvg(\.productivity, numDays: -30)
+        self.avgSleepLastMonth = getAvg(\.sleep, numDays: -30)
+        self.avgExerciseLastMonth = getAvg(\.exercise, numDays: -30)
+        
     }
     
     
     
     func refreshReportData() {
         // select report data and recalculate all metrics
-        self.reportData = reportDH.selectAllNonNull()
+        self.reportData = reportDH.selectAllMain()
         self.inputStreak = getInputStreak()
-        self.avgMoodLastWeek = getAvgLastWeek(\.mood)
-        self.avgProdLastWeek = getAvgLastWeek(\.productivity)
-        self.avgSleepLastWeek = getAvgLastWeek(\.sleep)
-        self.avgExerciseLastWeek = getAvgLastWeek(\.exercise)
+        
+        self.avgMoodLastWeek = getAvg(\.mood, numDays: -7)
+        self.avgProdLastWeek = getAvg(\.productivity, numDays: -7)
+        self.avgSleepLastWeek = getAvg(\.sleep, numDays: -7)
+        self.avgExerciseLastWeek = getAvg(\.exercise, numDays: -7)
+        
+        self.avgMoodLastMonth = getAvg(\.mood, numDays: -30)
+        self.avgProdLastMonth = getAvg(\.productivity, numDays: -30)
+        self.avgSleepLastMonth = getAvg(\.sleep, numDays: -30)
+        self.avgExerciseLastMonth = getAvg(\.exercise, numDays: -30)
     }
     
     
@@ -72,44 +92,12 @@ class ReportViewModel: ObservableObject {
     
     
     
-    // get average mood in the past week
-    func getAvgMoodLastWeek() -> Double {
-        var totalMood: Double = 0
-        var count: Int = 0
-        let aWeekAgo: Date = Calendar.current.date(byAdding: .day, value: -7, to: Date())!
-
-        for row in reportData {
-            if (row.date >= aWeekAgo) {
-                totalMood += Double(row.mood)
-                count += 1
-            }
-        }
-        return totalMood / Double(count)
-    }
-
-    
-    
-    // get average productivity in the past week
-    func getAvgProdLastWeek() -> Double {
-        var totalProd: Double = 0
-        var count: Int = 0
-        let aWeekAgo: Date = Calendar.current.date(byAdding: .day, value: -7, to: Date())!
-
-        for row in reportData {
-            if (row.date >= aWeekAgo) {
-                totalProd += Double(row.productivity)
-                count += 1
-            }
-        }
-        return totalProd / Double(count)
-    }
-    
     
     // Generic function to get average of any numeric field in the past week
-    func getAvgLastWeek<T: BinaryInteger>(_ keyPath: KeyPath<reportDataRow, T>) -> Double {
+    func getAvg<T: BinaryInteger>(_ keyPath: KeyPath<reportDataRow, T>, numDays: Int) -> Double {
         var total: Double = 0
         var count: Int = 0
-        let aWeekAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date())!
+        let aWeekAgo = Calendar.current.date(byAdding: .day, value: numDays, to: Date())!
 
         for row in reportData where row.date >= aWeekAgo {
             total += Double(row[keyPath: keyPath])
@@ -120,10 +108,10 @@ class ReportViewModel: ObservableObject {
     }
 
     
-    func getAvgLastWeek(_ keyPath: KeyPath<reportDataRow, Double>) -> Double {
+    func getAvg(_ keyPath: KeyPath<reportDataRow, Double>, numDays: Int) -> Double {
         var total: Double = 0
         var count: Int = 0
-        let aWeekAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date())!
+        let aWeekAgo = Calendar.current.date(byAdding: .day, value: numDays, to: Date())!
 
         for row in reportData where row.date >= aWeekAgo {
             total += row[keyPath: keyPath]
@@ -135,7 +123,7 @@ class ReportViewModel: ObservableObject {
     
     
     
-    func getMoodGradient(for mood: Int) -> LinearGradient {
+    func getMoodGradient(for mood: Double) -> LinearGradient {
         switch mood {
         case let c where c == 1:
             return LinearGradient(
@@ -218,13 +206,15 @@ class ReportViewModel: ObservableObject {
 struct reportDataRow: Identifiable, Codable {
     var id: Date { date } // computed property avoids Codable issues
     let date: Date
-    let mood: Int
-    let productivity: Int
+    let mood: Double
+    let productivity: Double
     let sleep: Double
     let exercise: Double
-    let temp: Double
-    let conditions: String
-    let location: String
+    let temp: Double?
+    let conditions: String?
+    let location: String?
+    let sleepStart: Date?
+    let sleepEnd: Date?
 }
 
     

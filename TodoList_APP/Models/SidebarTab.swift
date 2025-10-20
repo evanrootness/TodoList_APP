@@ -12,7 +12,7 @@ enum SidebarTab: String, CaseIterable {
          input = "Daily Input",
          music = "Music",
          weather = "Weather",
-         calendar = "Calendar",
+//         calendar = "Calendar",
 //         routines = "Routines",
 //         history = "History",
          settings = "Settings"
@@ -23,7 +23,7 @@ enum SidebarTab: String, CaseIterable {
         case .input: return "smiley"
         case .music: return "music.note"
         case .weather: return "sun.max"
-        case .calendar: return "calendar"
+//        case .calendar: return "calendar"
 //        case .routines: return "clock.arrow.circlepath"
 //        case .history: return "book"
         case .settings: return "gearshape"

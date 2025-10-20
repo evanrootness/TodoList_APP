@@ -164,17 +164,19 @@ class SpotifyAuthManager: ObservableObject {
             }
         } else if let refresh = self.refreshToken {
             print("⚠️ Token expired or missing — attempting refresh")
-            refreshAccessToken(using: refresh) { success in
-                DispatchQueue.main.async {
-                    if success {
-                        print("✅ Successfully refreshed token")
-                        self.fetchRecentlyPlayedSafe {
-                            self.recalculateMetrics()
-                        }
-                    } else {
-                        print("❌ Failed to refresh token — user needs to log in")
+            self.refreshAccessToken(using: refresh) { success in
+//                DispatchQueue.main.async {
+                if success {
+                    print("✅ Successfully refreshed token")
+                    self.fetchRecentlyPlayedSafe {
+                        self.recalculateMetrics()
                     }
+                } else {
+                    print("❌ Failed to refresh token — user needs to log in")
+                    self.logout()
+                    
                 }
+//                }
             }
         } else {
             print("❌ No valid token or refresh token — user needs to log in")
@@ -199,9 +201,12 @@ class SpotifyAuthManager: ObservableObject {
         ensureValidAccessToken { [weak self] ok in
             guard let self = self else { return }
             if ok {
-                self.fetchRecentTracksCatchUp()
+                self.fetchRecentTracksCatchUp {
+                    completion?()
+                }
             } else {
                 self.startAuthorization()
+                completion?()
             }
         }
         
@@ -209,7 +214,7 @@ class SpotifyAuthManager: ObservableObject {
     }
     
     
-    func fetchRecentTracksCatchUp() {
+    func fetchRecentTracksCatchUp(completion: (() -> Void)? = nil) {
         guard let token = accessToken else { return }
         
         let now = Date()
@@ -240,6 +245,7 @@ class SpotifyAuthManager: ObservableObject {
                     // No more data
                     DispatchQueue.main.async {
                         self.lastFetchDate = now
+                        completion?()
                     }
                     return
                 }
@@ -260,6 +266,7 @@ class SpotifyAuthManager: ObservableObject {
                             SpotifyDatabaseHelper.shared.insertOrUpdateArtistDetails(from: artistDetails)
                         }
                     }
+                    completion?()
                 }
             }.resume()
         }
@@ -290,7 +297,6 @@ class SpotifyAuthManager: ObservableObject {
         //        print("starting auth with redirectURI = ", redirectURI)
         codeVerifier = generateCodeVerifier()
         let codeChallenge = generateCodeChallenge(codeVerifier)
-        
         let authURLString = """
         https://accounts.spotify.com/authorize?client_id=\(clientID)&response_type=code&redirect_uri=\(redirectURI)&scope=\(scopes)&code_challenge_method=S256&code_challenge=\(codeChallenge)
         """
@@ -302,7 +308,7 @@ class SpotifyAuthManager: ObservableObject {
     
     
     func handleRedirectURL(_ url: URL) {
-        //        print("handleRedirectURL CALLED with:", url.absoluteString)
+//        print("handleRedirectURL CALLED with:", url.absoluteString)
         guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
               let code = components.queryItems?.first(where: { $0.name == "code" })?.value else {
             print("No code found in URL")
