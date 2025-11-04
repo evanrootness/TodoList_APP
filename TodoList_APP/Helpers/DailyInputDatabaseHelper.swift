@@ -27,10 +27,18 @@ class DailyInputDatabaseHelper: ObservableObject {
     private let sleepEndColumn = DatabaseManager.shared.sleepEndColumn
     private let exerciseColumn = DatabaseManager.shared.exerciseColumn
     
+    private let totalCaloriesColumn = DatabaseManager.shared.totalCaloriesColumn
+    private let sugarCaloriesColumn = DatabaseManager.shared.sugarCaloriesColumn
+    private let vegetableCaloriesColumn = DatabaseManager.shared.vegetableCaloriesColumn
+    private let fruitCaloriesColumn = DatabaseManager.shared.fruitCaloriesColumn
+    private let carbCaloriesColumn = DatabaseManager.shared.carbCaloriesColumn
+    private let proteinCaloriesColumn = DatabaseManager.shared.proteinCaloriesColumn
+    private let dairyFatCaloriesColumn = DatabaseManager.shared.dairyFatCaloriesColumn
+    
 
     
     // overwrite a row of daily input data if already in table, otherwise insert new row
-    func forceInsertDailyInput(date: Date, mood: Int, productivity: Int, sleep: Double, sleepStart: String, sleepEnd: String, exercise: Double) {
+    func forceInsertDailyInput(date: Date, mood: Int, productivity: Int, sleep: Double, sleepStart: String, sleepEnd: String, exercise: Double, calorieDict: [String: Double]) {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         let dateString = formatter.string(from: date)
@@ -49,7 +57,15 @@ class DailyInputDatabaseHelper: ObservableObject {
                     sleepColumn <- sleep,
                     sleepStartColumn <- sleepStart,
                     sleepEndColumn <- sleepEnd,
-                    exerciseColumn <- exercise
+                    exerciseColumn <- exercise,
+                    
+                    totalCaloriesColumn <- calorieDict["Total"],
+                    sugarCaloriesColumn <- calorieDict["Sugar"],
+                    vegetableCaloriesColumn <- calorieDict["Veg."],
+                    fruitCaloriesColumn <- calorieDict["Fruit"],
+                    carbCaloriesColumn <- calorieDict["Carbs"],
+                    proteinCaloriesColumn <- calorieDict["Protein"],
+                    dairyFatCaloriesColumn <- calorieDict["Dairy/Fat"]
                 ))
             } else { // row does exist, so we need to update row
 //                print("Daily input for \(dateString) already exists. Overwriting row")
@@ -62,7 +78,15 @@ class DailyInputDatabaseHelper: ObservableObject {
                     sleepColumn <- sleep,
                     sleepStartColumn <- sleepStart,
                     sleepEndColumn <- sleepEnd,
-                    exerciseColumn <- exercise
+                    exerciseColumn <- exercise,
+                    
+                    totalCaloriesColumn <- calorieDict["Total"],
+                    sugarCaloriesColumn <- calorieDict["Sugar"],
+                    vegetableCaloriesColumn <- calorieDict["Veg."],
+                    fruitCaloriesColumn <- calorieDict["Fruit"],
+                    carbCaloriesColumn <- calorieDict["Carbs"],
+                    proteinCaloriesColumn <- calorieDict["Protein"],
+                    dairyFatCaloriesColumn <- calorieDict["Dairy/Fat"]
                 ))
             }
         } catch {

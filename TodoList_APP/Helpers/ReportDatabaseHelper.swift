@@ -28,6 +28,14 @@ class ReportDatabaseHelper: ObservableObject {
     private let sleepStartColumn = DatabaseManager.shared.sleepStartColumn
     private let sleepEndColumn = DatabaseManager.shared.sleepEndColumn
     
+    private let totalCaloriesColumn = DatabaseManager.shared.totalCaloriesColumn
+    private let sugarCaloriesColumn = DatabaseManager.shared.sugarCaloriesColumn
+    private let vegetableCaloriesColumn = DatabaseManager.shared.vegetableCaloriesColumn
+    private let fruitCaloriesColumn = DatabaseManager.shared.fruitCaloriesColumn
+    private let carbCaloriesColumn = DatabaseManager.shared.carbCaloriesColumn
+    private let proteinCaloriesColumn = DatabaseManager.shared.proteinCaloriesColumn
+    private let dairyFatCaloriesColumn = DatabaseManager.shared.dairyFatCaloriesColumn
+
     
     
     // select non-null data function
@@ -58,6 +66,8 @@ class ReportDatabaseHelper: ObservableObject {
                 .filter(locationColumn != nil)
                 .filter(sleepStartColumn != nil)
                 .filter(sleepEndColumn != nil)
+                .filter(totalCaloriesColumn != nil)
+            
             
             for row in try db.prepare(filteredTable) {
                 guard
@@ -70,7 +80,8 @@ class ReportDatabaseHelper: ObservableObject {
                    let sleepStartString = row[sleepStartColumn], !sleepStartString.isEmpty,
                    let sleepEndString = row[sleepEndColumn], !sleepEndString.isEmpty,
                    let sleepStart = isoFormatter.date(from: sleepStartString),
-                   let sleepEnd = isoFormatter.date(from: sleepEndString)
+                   let sleepEnd = isoFormatter.date(from: sleepEndString),
+                   let totalCalories = row[totalCaloriesColumn]
                 
                 {
 //                    print("appending row")
@@ -85,7 +96,8 @@ class ReportDatabaseHelper: ObservableObject {
                             conditions: row[conditionsColumn] ?? "",
                             location: row[locationColumn] ?? "",
                             sleepStart: sleepStart,
-                            sleepEnd: sleepEnd
+                            sleepEnd: sleepEnd,
+                            totalCalories: totalCalories
                         )
                     )
                 } else {
@@ -140,6 +152,13 @@ class ReportDatabaseHelper: ObservableObject {
                 var conditionsFinal: String? = nil
                 var locationFinal: String? = nil
                 
+                var totalCaloriesFinal: Double? = nil
+//                var sugarCaloriesFinal: Double? = nil
+//                var vegetableCaloriesFinal: Double? = nil
+//                var fruitCaloriesFinal: Double? = nil
+//                var carbCaloriesFinal: Double? = nil
+//                var proteinCaloriesFinal: Double? = nil
+//                var dairyFatCaloriesFinal: Double? = nil
                 
                 if let moodRaw = row[moodColumn] {
                     moodValue = Double(moodRaw)
@@ -178,6 +197,13 @@ class ReportDatabaseHelper: ObservableObject {
                     locationFinal = location
                 }
                 
+                if let totalCalories = row[totalCaloriesColumn],
+                   !totalCalories.isNaN {
+                    totalCaloriesFinal = totalCalories
+                }
+                
+                
+                
 //                print("Row mood:", row[moodColumn] as Any,
 //                      "prod:", row[productivityColumn] as Any,
 //                      "temp:", row[tempColumn] as Any)
@@ -206,7 +232,8 @@ class ReportDatabaseHelper: ObservableObject {
                         conditions: conditionsFinal,
                         location: locationFinal,
                         sleepStart: sleepStart,
-                        sleepEnd: sleepEnd
+                        sleepEnd: sleepEnd,
+                        totalCalories: totalCaloriesFinal
                     )
                 )
 //                } else {
@@ -225,8 +252,14 @@ class ReportDatabaseHelper: ObservableObject {
     
     
     
+//    private func sdsdff(row, column, final): {
+//        if let value = row[column], !value.isNaN { final = value }
+//    }
     
-    
+//    if let totalCalories = row[totalCaloriesColumn],
+//       !totalCalories.isNaN {
+//        totalCaloriesFinal = totalCalories
+//    }
     
 }
 

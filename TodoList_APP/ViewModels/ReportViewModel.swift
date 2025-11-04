@@ -215,6 +215,7 @@ struct reportDataRow: Identifiable, Codable {
     let location: String?
     let sleepStart: Date?
     let sleepEnd: Date?
+    let totalCalories: Double?
 }
 
     

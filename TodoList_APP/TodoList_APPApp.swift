@@ -29,6 +29,7 @@ struct TodoList_APPApp: App {
     @StateObject var weatherVM = WeatherViewModel()
     @StateObject var inputVM = DailyInputViewModel()
     @StateObject var reportVM = ReportViewModel()
+    @StateObject var settingsVM = SettingsViewModel()
     
     init() {
         _ = DatabaseManager.shared
@@ -44,6 +45,7 @@ struct TodoList_APPApp: App {
                 .environmentObject(weatherVM)
                 .environmentObject(inputVM)
                 .environmentObject(reportVM)
+                .environmentObject(settingsVM)
         }
     }
 }

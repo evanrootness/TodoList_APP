@@ -12,20 +12,41 @@ import SwiftUI
 struct DailyInputView: View {
     @EnvironmentObject var inputVM: DailyInputViewModel
     
+    @StateObject var pieChart1: NutritionPieChartModel
+    @StateObject var pieChart2: NutritionPieChartModel
+    @StateObject var pieChart3: NutritionPieChartModel
+    
     @State private var dailyInputDict: [String: String] = [:]
+//    @State private var dailyInputNutrition:
 
-    @State private var sleepStart = Date()
-    @State private var sleepEnd = Date()
-    @State private var inputDate = Date()
+    @State private var sleepStart: Date = {
+        var components = Calendar.current.dateComponents([.year, .month, .day], from: Date())
+        components.hour = 23
+        components.minute = 0
+        return Calendar.current.date(from: components) ?? Date()
+    }()
+    @State private var sleepEnd: Date = {
+        var components = Calendar.current.dateComponents([.year, .month, .day], from: Date())
+        components.hour = 7
+        components.minute = 40
+        return Calendar.current.date(from: components) ?? Date()
+    }()
+    @State private var inputDate: Date = Date()
+    
+    init() {
+            let categories = DailyInputView.defaultCategories()
+            _pieChart1 = StateObject(wrappedValue: NutritionPieChartModel(categories: categories))
+            _pieChart2 = StateObject(wrappedValue: NutritionPieChartModel(categories: categories))
+            _pieChart3 = StateObject(wrappedValue: NutritionPieChartModel(categories: categories))
+        }
     
     
     var body: some View {
         VStack{
             Spacer()
             VStack{
-                
-//                Text("Day of Input")
-//                    .frame(maxWidth: .infinity, alignment: .leading)
+            
+                // Input day date picker
                 DatePicker(
                     "Day of Input",
                     selection: $inputDate,
@@ -35,7 +56,10 @@ struct DailyInputView: View {
                     let formatter = DateFormatter()
                     formatter.dateFormat = "yyyy-MM-dd"
                     dailyInputDict["date"] = formatter.string(from: newValue)
-//                    dailyInputDict["date"] = $inputDate.stringBinding(forKey: "date")
+                    
+                    // set sleepStart and sleepEnd in dictionary
+                    setDictSleepStart()
+                    setDictSleepEnd()
                 }
                 
                 
@@ -49,38 +73,22 @@ struct DailyInputView: View {
                 TextField("1-10", text: $dailyInputDict.stringBinding(forKey: "productivity"))
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                 
-
                 Text("How long did you exercise today?")
                     .frame(maxWidth: .infinity, alignment: .leading)
                 TextField("Enter in hours", text: $dailyInputDict.stringBinding(forKey: "exercise"))
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                 
-                
+                // Sleep start and end date pickers
                 Form {
-                    Section(header: Text("Sleep")) {
+//                    Section(header: Text("Sleep")) {
+                    HStack {
                         DatePicker(
                             "Sleep Start",
                             selection: $sleepStart,
                             displayedComponents: [.hourAndMinute]
                         )
                         .onChange(of: sleepStart) { oldValue, newValue in
-                            // Combine inputDate with the time from sleepStart
-                            let calendar = Calendar.current
-                            var startDate = calendar.date(
-                                bySettingHour: calendar.component(.hour, from: sleepStart),
-                                minute: calendar.component(.minute, from: sleepStart),
-                                second: 0,
-                                of: inputDate
-                            )!
-
-                            let hour = calendar.component(.hour, from: sleepStart)
-                            // if sleep start time is between noon and midnight, subtract one day from the inputdate to get the day of sleep start
-                            if hour >= 12 && hour <= 23 {
-                                startDate = calendar.date(byAdding: .day, value: -1, to: startDate)!
-                            }
-
-                            // Convert to ISO8601 for the dictionary
-                            dailyInputDict["sleepStart"] = iso8601String(from: startDate)
+                            setDictSleepStart()
                         }
                         
                         DatePicker(
@@ -89,32 +97,36 @@ struct DailyInputView: View {
                             displayedComponents: [.hourAndMinute]
                         )
                         .onChange(of: sleepEnd) { oldValue, newValue in
-                            // Combine inputDate with sleep end time (same day)
-                            let calendar = Calendar.current
-                            let endDate = calendar.date(
-                                bySettingHour: calendar.component(.hour, from: sleepEnd),
-                                minute: calendar.component(.minute, from: sleepEnd),
-                                second: 0,
-                                of: inputDate
-                            )!
-
-                            dailyInputDict["sleepEnd"] = iso8601String(from: endDate)
+                            setDictSleepEnd()
                         }
                     }
                 }
+                .padding(10)
                 
-//                Text("How long did you sleep last night?")
-//                    .frame(maxWidth: .infinity, alignment: .leading)
-//                TextField("Enter in hours", text: $dailyInputDict.stringBinding(forKey: "sleep"))
-//                    .textFieldStyle(RoundedBorderTextFieldStyle())
                 
+                // Daily Nutrition input
+                HStack(spacing: 10) {
+                    NutritionPieChartView(model: pieChart1)
+                    NutritionPieChartView(model: pieChart2)
+                    NutritionPieChartView(model: pieChart3)
+                }
+                .frame(minWidth: 600)
                 
             }
             .frame(maxHeight: .infinity)
             .padding(80)
+            .onAppear {
+                // set initial date string
+                let formatter = DateFormatter()
+                formatter.dateFormat = "yyyy-MM-dd"
+                dailyInputDict["date"] = formatter.string(from: inputDate)
+
+                // set initial sleepStart and sleepEnd in ISO8601 (same as onChange)
+                setDictSleepStart()
+                setDictSleepEnd()
+            }
             
             Spacer()
-            
             
             Button(action: {
                 let startDate = combineDatetime(date: inputDate, time: sleepStart)
@@ -129,7 +141,7 @@ struct DailyInputView: View {
                 
                 dailyInputDict["sleep"] = String(format: "%.2f", hoursSlept)
                 
-                inputVM.logDailyData(dailyInputDict: dailyInputDict, inputDate: inputDate)
+                inputVM.logDailyData(dailyInputDict: dailyInputDict, inputDate: inputDate, nutritionPieModels: [pieChart1, pieChart2, pieChart3])
                 
             }) {
                 Text("Log Data")
@@ -147,7 +159,7 @@ struct DailyInputView: View {
     }
     
     
-    func combineDatetime(date: Date, time: Date) -> Date {
+    private func combineDatetime(date: Date, time: Date) -> Date {
         let calendar = Calendar.current
         let dateComponents = calendar.dateComponents([.year, .month, .day], from: date)
         let timeComponents = calendar.dateComponents([.hour, .minute, .second], from: time)
@@ -162,12 +174,59 @@ struct DailyInputView: View {
         
         return calendar.date(from: combined)!
     }
+    
+    
+    static func defaultCategories() -> [FoodCategory] {
+        [
+            FoodCategory(name: "Protein", startColor: Color(red: 0.7, green: 0.3, blue: 0.6), endColor: Color(red: 0.25, green: 0.05, blue: 0.4), fraction: 0.2),
+            FoodCategory(name: "Dairy/Fat", startColor: Color(red: 0.4, green: 0.65, blue: 1), endColor: Color(red: 0.05, green: 0.3, blue: 0.85), fraction: 0.1),
+            FoodCategory(name: "Veg.", startColor: Color(red: 0.7, green: 0.8, blue: 0.0), endColor: Color(red: 0.0, green: 0.3, blue: 0.05), fraction: 0.3),
+            FoodCategory(name: "Fruit", startColor: Color(red: 0.8, green: 0.8, blue: 0.25), endColor: Color(red: 0.7, green: 0.0, blue: 0.0), fraction: 0.1),
+            FoodCategory(name: "Carbs", startColor: Color(red: 0.7, green: 0.5, blue: 0.4), endColor: Color(red: 0.4, green: 0.2, blue: 0.05), fraction: 0.25),
+            FoodCategory(name: "Sugar", startColor: Color(red: 0.2, green: 0.2, blue: 0.2), endColor: Color(red: 0.03, green: 0.03, blue: 0.03), fraction: 0.05)
+        ]
+    }
+    
+    
+    private func setDictSleepStart() {
+        // Combine inputDate with the time from sleepStart
+        let calendar = Calendar.current
+        var startDate = calendar.date(
+            bySettingHour: calendar.component(.hour, from: sleepStart),
+            minute: calendar.component(.minute, from: sleepStart),
+            second: 0,
+            of: inputDate
+        )!
+        
+        let hour = calendar.component(.hour, from: sleepStart)
+        // if sleep start time is between noon and midnight, subtract one day from the inputdate to get the day of sleep start
+        if hour >= 12 && hour <= 23 {
+            startDate = calendar.date(byAdding: .day, value: -1, to: startDate)!
+        }
+        
+        // Convert to ISO8601 for the dictionary
+        dailyInputDict["sleepStart"] = iso8601String(from: startDate)
+    }
+    
+    
+    private func setDictSleepEnd() {
+        // Combine inputDate with sleep end time (same day)
+        let calendar = Calendar.current
+        let endDate = calendar.date(
+            bySettingHour: calendar.component(.hour, from: sleepEnd),
+            minute: calendar.component(.minute, from: sleepEnd),
+            second: 0,
+            of: inputDate
+        )!
+        
+        // Convert to ISO8601 for the dictionary
+        dailyInputDict["sleepEnd"] = iso8601String(from: endDate)
+    }
 }
 
 
 
 extension Binding where Value == [String: String] {
-    
     func stringBinding(forKey key: String) -> Binding<String> {
         Binding<String>(
             get: { self.wrappedValue[key] ?? "" },

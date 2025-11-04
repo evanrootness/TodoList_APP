@@ -16,6 +16,9 @@ struct ScatterPlotView: View {
     
     let xAxisTitle: String
     let yAxisTitle: String
+    let showFit: Bool
+    let fit: [Double]
+    let points: [DataPoint] // pass in multiple points as parameter
     
     struct DataPoint: Identifiable {
         let id = UUID()
@@ -23,28 +26,33 @@ struct ScatterPlotView: View {
         let y: Double
     }
     
-    let points: [DataPoint] // pass in multiple points as parameter
-    
-    var xMin: Double? { points.map { $0.x }.min() }
-    var xMax: Double? { points.map { $0.x }.max() }
-    var yMin: Double? { points.map { $0.y }.min() }
-    var yMax: Double? { points.map { $0.y }.max() }
-    
-    var xBorder: Double? {
-        if let min = xMin, let max = xMax {
-            return (max - min) * 0.1
-        }
-        return nil
-    }
-    
-    var yBorder: Double? {
-        if let min = yMin, let max = yMax {
-            return (max - min) * 0.1
-        }
-        return nil
-    }
-    
 
+    var xMin: Double { points.map(\.x).min() ?? 0 }
+    var xMax: Double { points.map(\.x).max() ?? 1 }
+    var yMin: Double { points.map(\.y).min() ?? 0 }
+    var yMax: Double { points.map(\.y).max() ?? 1 }
+    
+    var xBorderSpace: Double { (xMax - xMin) * 0.1 }
+    var yBorderSpace: Double { (yMax - yMin) * 0.1 }
+
+    var xBorderMin: Double { xMin - xBorderSpace }
+    var xBorderMax: Double { xMax + xBorderSpace }
+    var yBorderMin: Double { yMin - yBorderSpace }
+    var yBorderMax: Double { yMax + yBorderSpace }
+
+    
+    var linePoints: [(x: Double, y: Double)] {
+        guard fit.count >= 2 else { return [] }
+        let slope = fit[0]
+        let intercept = fit[1]
+        
+        return [
+            (x: xBorderMin, y: slope * xBorderMin + intercept),
+            (x: xBorderMax, y: slope * xBorderMax + intercept)
+        ]
+    }
+    
+    
     
     var body: some View {
         if points.isEmpty {
@@ -63,13 +71,24 @@ struct ScatterPlotView: View {
                     .foregroundStyle(Color(red: 0.9, green: 0.15, blue: 0.45))
                     .opacity(0.65)
                 }
+                
+                if showFit, linePoints.count == 2 {
+                    ForEach(linePoints, id: \.x) { point in
+                        LineMark(
+                            x: .value(xAxisTitle, point.x),
+                            y: .value(yAxisTitle, point.y)
+                            )
+                        .foregroundStyle(.blue)
+                        .lineStyle(StrokeStyle(lineWidth: 3))
+                    }
+                }
             }
             .frame(height: 300)
             .padding()
             .chartXAxisLabel(xAxisTitle)
             .chartYAxisLabel(yAxisTitle)
-            .chartXScale(domain: [xMin! - xBorder!, xMax! + xBorder!])
-            .chartYScale(domain: [yMin! - yBorder!, yMax! + yBorder!])
+            .chartXScale(domain: [xBorderMin, xBorderMax])
+            .chartYScale(domain: [yBorderMin, yBorderMax])
         }
     }
 }

@@ -8,6 +8,7 @@
 import Foundation
 import SwiftUI
 
+
 class DailyInputViewModel: ObservableObject {
     @Published var dailyInputComplete: Bool = false
     
@@ -96,15 +97,18 @@ class DailyInputViewModel: ObservableObject {
     
     
     // function to log daily data that has been input by user
-    func logDailyData(dailyInputDict: [String: String], inputDate: Date) {
+    func logDailyData(dailyInputDict: [String: String], inputDate: Date, nutritionPieModels: [NutritionPieChartModel]) {
         
         // first check that all fields have been filled
         if !checkDailyInputComplete(dailyInputDict: dailyInputDict) {
             return
         }
         
+        // Calculate the total summed calories into a dictionary
+        let calorieDict = calculateTotalCalories(pieModels: nutritionPieModels)
+        
         // then run force insert function
-        insertDailyInput(dailyInputDict: dailyInputDict, inputDate: inputDate)
+        insertDailyInput(dailyInputDict: dailyInputDict, inputDate: inputDate, calorieDict: calorieDict)
         
         // then set dailyInputComplete to true to trigger the view changing to the report
         dailyInputComplete = true
@@ -113,12 +117,28 @@ class DailyInputViewModel: ObservableObject {
     }
     
     
-    private func insertDailyInput(dailyInputDict: [String: String], inputDate: Date) {
+    private func insertDailyInput(dailyInputDict: [String: String], inputDate: Date, calorieDict: [String: Double]) {
         // convert dict values' types from strings
         let (mood, productivity, sleep, sleepStart, sleepEnd, exercise) = convertInputStrings(inputDict: dailyInputDict)
         
         // run force insert
-        inputDH.forceInsertDailyInput(date: inputDate, mood: mood, productivity: productivity, sleep: sleep, sleepStart: sleepStart, sleepEnd: sleepEnd, exercise: exercise)
+        inputDH.forceInsertDailyInput(date: inputDate, mood: mood, productivity: productivity, sleep: sleep, sleepStart: sleepStart, sleepEnd: sleepEnd, exercise: exercise, calorieDict: calorieDict)
+    }
+    
+    // function that calculates the summed calorie counts for any number of pie chart models
+    func calculateTotalCalories(pieModels: [NutritionPieChartModel]) -> [String: Double] {
+        var nutritionTotals: [String: Double] = [:]
+        // loop through each meal
+        for pieModel in pieModels {
+            // loop through each food group
+            for category in pieModel.categories {
+                let calories = category.fraction * pieModel.totalCalories
+                nutritionTotals[category.name, default: 0] += calories
+                nutritionTotals["Total", default: 0] += calories
+            }
+        }
+        
+        return nutritionTotals
     }
     
     // convert strings to int and double
