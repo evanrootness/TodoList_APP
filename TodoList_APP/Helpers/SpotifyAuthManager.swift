@@ -200,13 +200,15 @@ class SpotifyAuthManager: ObservableObject {
     func fetchRecentlyPlayedSafe(completion: (() -> Void)? = nil) {
         ensureValidAccessToken { [weak self] ok in
             guard let self = self else { return }
-            if ok {
-                self.fetchRecentTracksCatchUp {
+            DispatchQueue.main.async {
+                if ok {
+                    self.fetchRecentTracksCatchUp {
+                        completion?()
+                    }
+                } else {
+                    self.startAuthorization()
                     completion?()
                 }
-            } else {
-                self.startAuthorization()
-                completion?()
             }
         }
         
@@ -254,16 +256,14 @@ class SpotifyAuthManager: ObservableObject {
         
                 DispatchQueue.main.async {
                     self.lastFetchDate = now
-                }
-                
-                // Insert into DB as soon as each page is done
-                for item in resp.items {
-                    SpotifyDatabaseHelper.shared.insertListeningHistory(from: item)
-                    
-                    for artist in item.track.artists {
-                        // Fetch full artist info (with genres)
-                        self.fetchArtistDetails(artistID: artist.id) { artistDetails in
-                            SpotifyDatabaseHelper.shared.insertOrUpdateArtistDetails(from: artistDetails)
+                    // Insert into DB as soon as each page is done
+                    for item in resp.items {
+                        SpotifyDatabaseHelper.shared.insertListeningHistory(from: item)
+                        for artist in item.track.artists {
+                            // Fetch full artist info (with genres)
+                            self.fetchArtistDetails(artistID: artist.id) { artistDetails in
+                                SpotifyDatabaseHelper.shared.insertOrUpdateArtistDetails(from: artistDetails)
+                            }
                         }
                     }
                     completion?()

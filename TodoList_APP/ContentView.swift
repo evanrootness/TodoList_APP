@@ -14,6 +14,7 @@ struct ContentView: View {
     @EnvironmentObject var weatherVM: WeatherViewModel
     @EnvironmentObject var inputVM: DailyInputViewModel
     @EnvironmentObject var reportVM: ReportViewModel
+    @EnvironmentObject var settingsVM: SettingsViewModel
     
     var body: some View {
         ZStack {

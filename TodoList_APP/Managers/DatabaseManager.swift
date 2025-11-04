@@ -24,6 +24,15 @@ class DatabaseManager {
     let tempColumn = Expression<Double?>("temp")
     let conditionsColumn = Expression<String?>("conditions")
     let locationColumn = Expression<String?>("location")
+    // nutrition columns
+    let totalCaloriesColumn = Expression<Double?>("total_calories")
+    let sugarCaloriesColumn = Expression<Double?>("sugar_calories")
+    let vegetableCaloriesColumn = Expression<Double?>("vegetable_calories")
+    let fruitCaloriesColumn = Expression<Double?>("fruit_calories")
+    let carbCaloriesColumn = Expression<Double?>("carb_calories")
+    let proteinCaloriesColumn = Expression<Double?>("protein_calories")
+    let dairyFatCaloriesColumn = Expression<Double?>("dairy_fat_calories")
+    
     
 
     private init() {
@@ -49,6 +58,14 @@ class DatabaseManager {
                 t.column(tempColumn)
                 t.column(conditionsColumn)
                 t.column(locationColumn)
+                
+                t.column(totalCaloriesColumn)
+                t.column(sugarCaloriesColumn)
+                t.column(vegetableCaloriesColumn)
+                t.column(fruitCaloriesColumn)
+                t.column(carbCaloriesColumn)
+                t.column(proteinCaloriesColumn)
+                t.column(dairyFatCaloriesColumn)
             })
         } catch {
             print("Table creation error: \(error)")

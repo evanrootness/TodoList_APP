@@ -14,6 +14,19 @@ struct ReportView: View {
     @State private var selectedMonth: Date = Date() // start at today
     @State private var selectedXAxis: String = "Sleep"
     @State private var selectedYAxis: String = "Mood"
+    @State private var showFit: Bool = true
+//    @State private var fitCoefficients: [Double] = [0.0]
+    
+    var fitCoefficients: [Double] {
+        let x = filteredDataPoints.map { $0.x }
+        let y = filteredDataPoints.map { $0.y }
+        
+        let fit = FittingModel.linearFit(x: x, y: y)
+        
+        return [fit.slope, fit.intercept]
+    }
+    
+    var isFitting: Bool = false
     
     var filteredDataPoints: [ScatterPlotView.DataPoint] {
         reportVM.reportData.compactMap { data in
@@ -36,6 +49,8 @@ struct ReportView: View {
                 x = data.exercise
             case "Temperature":
                 x = data.temp
+            case "Total Calories":
+                x = data.totalCalories
             default:
                 x = nil
             }
@@ -56,6 +71,8 @@ struct ReportView: View {
                 y = data.exercise
             case "Temperature":
                 y = data.temp
+            case "Total Calories":
+                y = data.totalCalories
             default:
                 y = nil
             }
@@ -69,8 +86,7 @@ struct ReportView: View {
         }
     }
 
-    
-    let availableAxes = ["Mood", "Productivity", "Temperature", "Sleep", "Exercise", "Sleep Start", "Sleep End"]
+    let availableAxes = ["Mood", "Productivity", "Temperature", "Sleep", "Exercise", "Sleep Start", "Sleep End", "Total Calories"]
     
     let calendar = Calendar.current
     
@@ -154,11 +170,6 @@ struct ReportView: View {
         
         ScrollView {
             VStack {
-                
-//                Text("Key Metrics")
-//                    .font(.system(size: 16, design: .serif))
-//                    .frame(maxWidth: .infinity, alignment: .leading)
-//                    .padding()
 
                 // Scorecard row
                 HStack (spacing: 10) {
@@ -226,7 +237,6 @@ struct ReportView: View {
                     }
                     .padding([.top, .leading, .trailing], 10)
                     .frame(maxWidth: .infinity)
-                    
                 }
                 
                 
@@ -331,16 +341,12 @@ struct ReportView: View {
                                 .padding(.leading, 20)
                             Spacer()
                         }
-                        
-//                        // Build correlation points dynamically
-//                        let xValues = values(for: selectedXAxis)
-//                        let yValues = values(for: selectedYAxis)
-//                        
-//                        let correlationPoints = zip(xValues, yValues).map { ScatterPlotView.DataPoint(x: $0, y: $1) }
-                        
-//                        ScatterPlotView(xAxisTitle: selectedXAxis, yAxisTitle: selectedYAxis, points: correlationPoints)
-                        ScatterPlotView(xAxisTitle: selectedXAxis, yAxisTitle: selectedYAxis, points: filteredDataPoints)
 
+                        ScatterPlotView(xAxisTitle: selectedXAxis,
+                                        yAxisTitle: selectedYAxis,
+                                        showFit: showFit,
+                                        fit: fitCoefficients,
+                                        points: filteredDataPoints)
                         
                         // Axes pickers
                         HStack {
@@ -356,9 +362,16 @@ struct ReportView: View {
                             }
                         }
                         .pickerStyle(MenuPickerStyle()) // or SegmentedPickerStyle()
+                        .padding(5)
+                        .foregroundColor(.white)
+                        .cornerRadius(7)
                         
+//                        if reportVM.isFitting {
+//                            ProgressView("Fitting...")
+//                        }
                     }
                     .padding(10)
+                    
                 }
                 
                 
@@ -378,6 +391,14 @@ struct ReportView: View {
     }
         
 
+//    func updateCoefficients() {
+//        let x = filteredDataPoints.map { $0.x }
+//        let y = filteredDataPoints.map { $0.y }
+//        
+//        let fit = FittingModel.linearFit(x: x, y: y)
+//        
+//        fitCoefficients = [fit.slope, fit.intercept]
+//    }
     
     // All days in the current month
     var daysInMonth: [Date] {
