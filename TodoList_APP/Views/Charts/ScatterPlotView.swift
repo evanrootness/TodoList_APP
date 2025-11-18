@@ -41,15 +41,28 @@ struct ScatterPlotView: View {
     var yBorderMax: Double { yMax + yBorderSpace }
 
     
+//    var linePoints: [(x: Double, y: Double)] {
+//        guard fit.count >= 2 else { return [] }
+//        let slope = fit[0]
+//        let intercept = fit[1]
+//        
+//        return [
+//            (x: xBorderMin, y: slope * xBorderMin + intercept),
+//            (x: xBorderMax, y: slope * xBorderMax + intercept)
+//        ]
+//    }
+    
     var linePoints: [(x: Double, y: Double)] {
-        guard fit.count >= 2 else { return [] }
-        let slope = fit[0]
-        let intercept = fit[1]
+        guard !fit.isEmpty else { return [] }
         
-        return [
-            (x: xBorderMin, y: slope * xBorderMin + intercept),
-            (x: xBorderMax, y: slope * xBorderMax + intercept)
-        ]
+        // number of points that make up the line
+        let samples = 200
+        let step = (xBorderMax - xBorderMin) / Double(samples - 1)
+        
+        return (0..<samples).map { i in
+            let x = xBorderMin + Double(i) * step
+            return (x: x, y: evaluatePolynomialHorner(fit, at: x))
+        }
     }
     
     
@@ -72,15 +85,26 @@ struct ScatterPlotView: View {
                     .opacity(0.65)
                 }
                 
-                if showFit, linePoints.count == 2 {
-                    ForEach(linePoints, id: \.x) { point in
-                        LineMark(
-                            x: .value(xAxisTitle, point.x),
-                            y: .value(yAxisTitle, point.y)
+//                if showFit, linePoints.count == 2 {
+//                    ForEach(linePoints, id: \.x) { point in
+//                        LineMark(
+//                            x: .value(xAxisTitle, point.x),
+//                            y: .value(yAxisTitle, point.y)
+//                            )
+//                        .foregroundStyle(.blue)
+//                        .lineStyle(StrokeStyle(lineWidth: 3))
+//                    }
+//                }
+//                
+                if showFit {
+                    ForEach(Array(linePoints.enumerated()), id: \.offset) { _, point in
+                            LineMark(
+                                x: .value(xAxisTitle, point.x),
+                                y: .value(yAxisTitle, point.y)
                             )
+                        }
                         .foregroundStyle(.blue)
                         .lineStyle(StrokeStyle(lineWidth: 3))
-                    }
                 }
             }
             .frame(height: 300)
@@ -90,5 +114,24 @@ struct ScatterPlotView: View {
             .chartXScale(domain: [xBorderMin, xBorderMax])
             .chartYScale(domain: [yBorderMin, yBorderMax])
         }
+    }
+    
+    
+//    func evaluatePolynomial(_ coeffs: [Double], at x: Double) -> Double {
+//        var result = 0.0
+//        var power = 1.0
+//        for coefficient in coeffs {
+//            result += coefficient * power
+//            power *= x
+//        }
+//        return result
+//    }
+//    
+    func evaluatePolynomialHorner(_ coeffs: [Double], at x: Double) -> Double {
+        var result = 0.0
+        for coefficient in coeffs.reversed() {
+            result = result * x + coefficient
+        }
+        return result
     }
 }

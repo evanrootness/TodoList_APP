@@ -23,29 +23,37 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
 @main
 struct TodoList_APPApp: App {
+    // Initialize all ViewModels here
+    @StateObject var settingsVM = SettingsViewModel()
+//    @StateObject var reportVM: ReportViewModel
+    
     @StateObject var routineVM = RoutineViewModel()
-    @StateObject private var spotifyAuth = SpotifyAuthManager.shared
-    @StateObject var weatherDBHelper = WeatherDatabaseHelper.shared
+    @StateObject var spotifyAuth = SpotifyAuthManager.shared
     @StateObject var weatherVM = WeatherViewModel()
     @StateObject var inputVM = DailyInputViewModel()
-    @StateObject var reportVM = ReportViewModel()
-    @StateObject var settingsVM = SettingsViewModel()
+    
     
     init() {
         _ = DatabaseManager.shared
+        
+//        _reportVM = StateObject(wrappedValue: ReportViewModel(settingsVM: settingsVM))
     }
     
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate  // <-- pass the type
     
     var body: some Scene {
+        
+        // Initialize reportVM here, *after* settingsVM exists
+        let reportVM = ReportViewModel(settingsVM: settingsVM)
+        
         Window("TodoList_APP", id: "mainWindow") {
             ContentView()
+                .environmentObject(settingsVM)
+                .environmentObject(reportVM)
                 .environmentObject(routineVM)
                 .environmentObject(spotifyAuth)
                 .environmentObject(weatherVM)
                 .environmentObject(inputVM)
-                .environmentObject(reportVM)
-                .environmentObject(settingsVM)
         }
     }
 }

@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var selectedTab: SidebarTab = .report
+    
     @EnvironmentObject var routineVM: RoutineViewModel
     @EnvironmentObject var spotifyAuth: SpotifyAuthManager
     @EnvironmentObject var weatherVM: WeatherViewModel
