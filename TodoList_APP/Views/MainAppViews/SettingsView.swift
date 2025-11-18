@@ -10,7 +10,6 @@ import Foundation
 
 
 struct SettingsView: View {
-    
     @EnvironmentObject var settingsVM: SettingsViewModel
     
     
@@ -19,11 +18,18 @@ struct SettingsView: View {
             "Mood": $settingsVM.moodScorecard,
             "Productivity": $settingsVM.productivityScorecard,
             "Sleep": $settingsVM.sleepScorecard,
-            "Sleep Start": $settingsVM.sleepStartScorecard,
-            "Sleep End": $settingsVM.sleepEndScorecard,
             "Exercise": $settingsVM.exerciseScorecard,
             "Temperature": $settingsVM.temperatureScorecard,
             "Total Calories": $settingsVM.totalCaloriesScorecard
+        ]
+    }
+    
+    var timePeriods: [String: Binding<Bool>] {
+        [
+            "Last Week": $settingsVM.lastWeeksMetrics,
+            "Last Month": $settingsVM.lastMonthsMetrics,
+            "Last Year": $settingsVM.lastYearsMetrics,
+            "All Time": $settingsVM.allTimeMetrics
         ]
     }
     
@@ -35,21 +41,39 @@ struct SettingsView: View {
                 .font(.system(size: 28, design: .serif))
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
-                
             
-            Text("Report scorecards")
-                .font(.system(size: 16, design: .serif))
+            Text("Report:")
+                .font(.system(size: 20, design: .serif))
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
-            // Select scorecards hstack
-            HStack {
-                
-                ForEach(selections.keys.sorted(), id: \.self) { key in
-                    Toggle(isOn: selections[key]!) {
-                        Text(key)
-                    }
-                    .toggleStyle(.checkbox)
+            
+            
+            VStack {
+                Text("Scorecards")
+                    .font(.system(size: 14, design: .serif))
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
+                // Select scorecards hstack
+                HStack {
+                    ForEach(settingsVM.scorecardOrder, id: \.self) { key in
+                        Toggle(isOn: selections[key]!) { Text(key) }
+                        .toggleStyle(.checkbox)
+                        .padding()
+                    }
+                }
+                
+                Text("Time Periods")
+                    .font(.system(size: 14, design: .serif))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                
+                // Select scorecards hstack
+                HStack {
+                    ForEach(settingsVM.periodOrder, id: \.self) { key in
+                        Toggle(isOn: timePeriods[key]!) { Text(key) }
+                        .toggleStyle(.checkbox)
+                        .padding()
+                    }
                     
                 }
                 

@@ -71,7 +71,7 @@ struct NutritionPieChartView: View {
                         )
                         .overlay(PieSlice(startAngle: .degrees(startDeg),
                                           endAngle: .degrees(endDeg))
-                            .stroke(Color.black, lineWidth: 1))
+                            .stroke(Color.white, lineWidth: 3))
                         .frame(width: model.radius * 2, height: model.radius * 2)
                         .position(center)
                     }
@@ -84,10 +84,10 @@ struct NutritionPieChartView: View {
                     }
                     
                     // Optional: subtle circle outline to show edge area for resizing
-                    Circle()
-                        .strokeBorder(Color.black.opacity(0.9), lineWidth: 2)
-                        .frame(width: model.radius * 2, height: model.radius * 2)
-                        .position(center)
+//                    Circle()
+//                        .strokeBorder(Color.black.opacity(0.9), lineWidth: 2)
+//                        .frame(width: model.radius * 2, height: model.radius * 2)
+//                        .position(center)
                 }
                 .contentShape(Rectangle()) // allow gesture anywhere in geometry
                 .gesture(

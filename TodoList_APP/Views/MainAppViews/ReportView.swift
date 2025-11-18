@@ -11,12 +11,31 @@ import Foundation
 
 struct ReportView: View {
     @EnvironmentObject var reportVM: ReportViewModel
+    @EnvironmentObject var settingsVM: SettingsViewModel
+    
     @State private var selectedMonth: Date = Date() // start at today
     @State private var selectedXAxis: String = "Sleep"
     @State private var selectedYAxis: String = "Mood"
+    @State private var polynomialFitOrder: Int = 2
     @State private var showFit: Bool = true
 //    @State private var fitCoefficients: [Double] = [0.0]
+    var isFitting: Bool = false
+    let availableAxes = ["Mood", "Productivity", "Temperature", "Sleep", "Exercise", "Sleep Start", "Sleep End", "Total Calories"]
+    let availableOrders = [1, 2, 3, 4]
+    let calendar = Calendar.current
     
+    
+    let periodOrder: [String] = ["Last Week", "Last Month", "Last Year", "All Time"]
+    
+    var periodsWithScorecards: [(String, [ScorecardDataItem])] {
+        periodOrder.map { period in
+            let scorecardsForPeriod = reportVM.activeScorecards
+                .filter { $0.period == period }
+                .map { ScorecardDataItem(metric: $0.metric, period: $0.period, average: $0.average) }
+            return (period, scorecardsForPeriod)
+        }.filter { !$0.1.isEmpty }
+    }
+
     var fitCoefficients: [Double] {
         let x = filteredDataPoints.map { $0.x }
         let y = filteredDataPoints.map { $0.y }
@@ -26,7 +45,12 @@ struct ReportView: View {
         return [fit.slope, fit.intercept]
     }
     
-    var isFitting: Bool = false
+    var fitPolynomialCoefficients: [Double] {
+        let x = filteredDataPoints.map { $0.x }
+        let y = filteredDataPoints.map { $0.y }
+                
+        return FittingModel.polynomialFit(x: x, y: y, order: polynomialFitOrder)
+    }
     
     var filteredDataPoints: [ScatterPlotView.DataPoint] {
         reportVM.reportData.compactMap { data in
@@ -85,16 +109,13 @@ struct ReportView: View {
             }
         }
     }
-
-    let availableAxes = ["Mood", "Productivity", "Temperature", "Sleep", "Exercise", "Sleep Start", "Sleep End", "Total Calories"]
-    
-    let calendar = Calendar.current
     
     let scorecardGradient = LinearGradient(
         colors: [Color(red: 0.2, green: 0.2, blue: 0.6), Color(red: 0.22, green: 0.6, blue: 0.8), Color(red: 0.85, green: 0.8, blue: 0.3)],
         startPoint: .bottomLeading,
         endPoint: .top
     )
+    
     let streakGradient = LinearGradient(
 //        colors: [Color(red: 0.8, green: 0.1, blue: 0.1), Color(red: 0.85, green: 0.5, blue: 0.2), Color(red: 0.8, green: 0.87, blue: 0.4)],
         colors: [Color(red: 0.8, green: 0.87, blue: 0.4), Color(red: 0.85, green: 0.3, blue: 0.15), Color(red: 0.1, green: 0.3, blue: 0.65)],
@@ -165,83 +186,167 @@ struct ReportView: View {
         return hour
     }
     
+
     
     var body: some View {
         
         ScrollView {
             VStack {
 
-                // Scorecard row
+                // Top Row
                 HStack (spacing: 10) {
                     
-                    // Streak
-                    VStack{
-                        Text("Streak")
-                            .font(.system(size: 16, design: .serif))
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding()
-                        
-                        VStack {
-                            Text("Streak")
-                                .padding(.top, 15)
-                                .font(.system(size: 16, design: .serif))
-                                .foregroundColor(.white)
-                            Text("\(reportVM.inputStreak)")
-                                .padding([.leading, .trailing], 30)
-                                .font(.system(size: 28, design: .serif))
-                                .foregroundColor(.white)
-                            Text("Days")
-                                .padding(.bottom, 15)
-                                .font(.system(size: 16, design: .serif))
-                                .foregroundColor(.white)
-                        }
-                        .background(streakGradient)
-                        .cornerRadius(10)
-                        .frame(width: 150)
-                        .frame(minHeight: 50)
-                    }
+                    // Make the streak much smaller, likely in the corner
+//                    // Streak
+//                    VStack{
+//                        Text("Streak")
+//                            .font(.system(size: 16, design: .serif))
+//                            .frame(maxWidth: .infinity, alignment: .leading)
+//                            .padding()
+//                        
+//                        VStack {
+//                            Text("Streak")
+//                                .padding(.top, 15)
+//                                .font(.system(size: 16, design: .serif))
+//                                .foregroundColor(.white)
+//                            Text("\(reportVM.inputStreak)")
+//                                .padding([.leading, .trailing], 30)
+//                                .font(.system(size: 28, design: .serif))
+//                                .foregroundColor(.white)
+//                            Text("Days")
+//                                .padding(.bottom, 15)
+//                                .font(.system(size: 16, design: .serif))
+//                                .foregroundColor(.white)
+//                        }
+//                        .background(streakGradient)
+//                        .cornerRadius(10)
+//                        .frame(width: 150)
+//                        .frame(minHeight: 50)
+//                    }
                     
-                    // Last Week
-                    VStack {
-                        
-                        Text("Last Week's Averages")
-                            .font(.system(size: 16, design: .serif))
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding([.leading], 10)
-                        
-                        HStack(spacing: 10) {
-                            lastWeekScorecard(title: "Mood", avg: reportVM.getAvg(\.mood, numDays: -7))
-                            lastWeekScorecard(title: "Prod", avg: reportVM.getAvg(\.productivity, numDays: -7))
-                            lastWeekScorecard(title: "Sleep", avg: reportVM.getAvg(\.sleep, numDays: -7))
-                            lastWeekScorecard(title: "Exercise", avg: reportVM.getAvg(\.exercise, numDays: -7))
+//                    // Scorecards
+//                    VStack {
+//                        // Last Week
+//                        Text("Last Week's Averages")
+//                            .font(.system(size: 16, design: .serif))
+//                            .frame(maxWidth: .infinity, alignment: .leading)
+//                            .padding([.leading], 10)
+//                        
+//                        HStack(spacing: 10) {
+//                            lastWeekScorecard(title: "Mood", avg: reportVM.getAvg(\.mood, numDays: -7))
+//                            lastWeekScorecard(title: "Prod", avg: reportVM.getAvg(\.productivity, numDays: -7))
+//                            lastWeekScorecard(title: "Sleep", avg: reportVM.getAvg(\.sleep, numDays: -7))
+//                            lastWeekScorecard(title: "Exercise", avg: reportVM.getAvg(\.exercise, numDays: -7))
+//                        }
+//                        .frame(alignment: .leading)
+//                        
+//                        // Last Month
+//                        
+//                        Text("Last Month's Averages")
+//                            .font(.system(size: 16, design: .serif))
+//                            .frame(maxWidth: .infinity, alignment: .leading)
+//                            .padding([.leading], 10)
+//                        
+//                        HStack(spacing: 10) {
+//                            lastMonthScorecard(title: "Mood", avg: reportVM.getAvg(\.mood, numDays: -30))
+//                            lastMonthScorecard(title: "Prod", avg: reportVM.getAvg(\.productivity, numDays: -30))
+//                            lastMonthScorecard(title: "Sleep", avg: reportVM.getAvg(\.sleep, numDays: -30))
+//                            lastMonthScorecard(title: "Exercise", avg: reportVM.getAvg(\.exercise, numDays: -30))
+//                        }
+//                        .frame(alignment: .leading)
+//                            
+// 
+//                        
+//                    }
+//                    .padding([.top, .leading, .trailing], 10)
+//                    .frame(maxWidth: .infinity)
+                    
+                    // Scorecards in customizeable format
+                    VStack(alignment: .leading) {
+                        ForEach(periodsWithScorecards, id: \.0) { period, scorecardsForPeriod in
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(period)
+                                    .font(.headline)
+                                    .padding(.top, 10)
+                                
+                                HStack {
+                                    ForEach(scorecardsForPeriod, id: \.metric) { entry in
+                                        VStack {
+                                            Text(entry.metric)
+                                                .font(.subheadline)
+                                            Text(String(format: "%.2f", entry.average))
+                                                .font(.title3)
+                                                .bold()
+                                        }
+                                        .frame(maxWidth: .infinity)
+                                        .padding()
+                                        .background(Color(.green))
+                                        .cornerRadius(10)
+                                    }
+                                }
+                            }
                         }
-                        .frame(alignment: .leading)
-                        
-                        // Last Month
-                        
-                        Text("Last Month's Averages")
-                            .font(.system(size: 16, design: .serif))
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding([.leading], 10)
-                        
-                        HStack(spacing: 10) {
-                            lastMonthScorecard(title: "Mood", avg: reportVM.getAvg(\.mood, numDays: -30))
-                            lastMonthScorecard(title: "Prod", avg: reportVM.getAvg(\.productivity, numDays: -30))
-                            lastMonthScorecard(title: "Sleep", avg: reportVM.getAvg(\.sleep, numDays: -30))
-                            lastMonthScorecard(title: "Exercise", avg: reportVM.getAvg(\.exercise, numDays: -30))
-                        }
-                        .frame(alignment: .leading)
-                            
- 
-                        
+
+                    
+
                     }
-                    .padding([.top, .leading, .trailing], 10)
-                    .frame(maxWidth: .infinity)
+                    .padding()
+                    
+                    
+                    // Correlation Chart
+                    VStack {
+                        HStack {
+                            Text("Your Correlations")
+                                .font(.system(size: 20, design: .serif))
+                                .padding(.leading, 20)
+                            Spacer()
+                        }
+
+                        ScatterPlotView(xAxisTitle: selectedXAxis,
+                                        yAxisTitle: selectedYAxis,
+                                        showFit: showFit,
+//                                        fit: fitCoefficients,
+                                        fit: fitPolynomialCoefficients,
+                                        points: filteredDataPoints)
+                        
+                        // Axes pickers
+                        HStack {
+                            Picker("X Axis", selection: $selectedXAxis) {
+                                ForEach(availableAxes, id: \.self) { axis in
+                                    Text(axis).tag(axis)
+                                }
+                            }
+                            Picker("Y Axis", selection: $selectedYAxis) {
+                                ForEach(availableAxes, id: \.self) { axis in
+                                    Text(axis).tag(axis)
+                                }
+                            }
+                            Picker("Poly Order", selection: $polynomialFitOrder) {
+                                ForEach(availableOrders, id: \.self) { order in
+                                    Text(String(order)).tag(order)
+                                }
+                            }
+                            .frame(width: 120)
+                        }
+                        .pickerStyle(MenuPickerStyle()) // or SegmentedPickerStyle()
+                        .padding(5)
+                        .foregroundColor(.white)
+                        .cornerRadius(7)
+                        
+//                        if reportVM.isFitting {
+//                            ProgressView("Fitting...")
+//                        }
+                    }
+                    .padding(20)
+                    
                 }
                 
                 
-                // Hstack calendar and chart
+                // Second Row with time chart and mood calendar
                 HStack {
+                    
+                    // ADD IN: Time Chart
+                    // Here
                     
                     // mood calendar
                     VStack {
@@ -332,46 +437,7 @@ struct ReportView: View {
                     .frame(minWidth: 350, maxWidth: 500)
                     .padding(10)
                     
-                    
-                    // correlation chart
-                    VStack {
-                        HStack {
-                            Text("Your Correlations")
-                                .font(.system(size: 20, design: .serif))
-                                .padding(.leading, 20)
-                            Spacer()
-                        }
-
-                        ScatterPlotView(xAxisTitle: selectedXAxis,
-                                        yAxisTitle: selectedYAxis,
-                                        showFit: showFit,
-                                        fit: fitCoefficients,
-                                        points: filteredDataPoints)
-                        
-                        // Axes pickers
-                        HStack {
-                            Picker("X Axis", selection: $selectedXAxis) {
-                                ForEach(availableAxes, id: \.self) { axis in
-                                    Text(axis).tag(axis)
-                                }
-                            }
-                            Picker("Y Axis", selection: $selectedYAxis) {
-                                ForEach(availableAxes, id: \.self) { axis in
-                                    Text(axis).tag(axis)
-                                }
-                            }
-                        }
-                        .pickerStyle(MenuPickerStyle()) // or SegmentedPickerStyle()
-                        .padding(5)
-                        .foregroundColor(.white)
-                        .cornerRadius(7)
-                        
-//                        if reportVM.isFitting {
-//                            ProgressView("Fitting...")
-//                        }
-                    }
-                    .padding(10)
-                    
+                  
                 }
                 
                 
@@ -385,6 +451,7 @@ struct ReportView: View {
                 
             }
         }
+        .padding(.top, 10)
 //        .onAppear {
 //            reportVM.refreshReportData()
 //        }
@@ -515,9 +582,9 @@ struct lastMonthScorecard: View {
 
 
 
-struct  ReportView_Previews: PreviewProvider {
-    static var previews: some View {
-        ReportView()
-            .environmentObject(ReportViewModel())
-    }
-}
+//struct  ReportView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        ReportView()
+//            .environmentObject(ReportViewModel())
+//    }
+//}
